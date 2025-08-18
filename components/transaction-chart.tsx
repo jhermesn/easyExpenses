@@ -20,7 +20,7 @@ interface Transaction {
   type: "income" | "expense"
   amount: number
   date: Date
-  description: string
+  title: string
 }
 
 interface TransactionChartProps {
@@ -94,25 +94,66 @@ export function TransactionChart({ transactions }: TransactionChartProps) {
     <div className="space-y-8">
       <div>
         <h3 className="text-xl font-semibold text-green-400 mb-4">{t("income")} vs {t("expenses")}</h3>
-        <ResponsiveContainer width="100%" height={280}>
-          <PieChart>
-            <Pie
-              data={incomeVsExpense}
-              cx="50%"
-              cy="50%"
-              labelLine={false}
-              label={({ name, value }) => `${name}: ${formatCurrency(Number(value ?? 0))}`}
-              outerRadius={90}
-              fill="#8884d8"
-              dataKey="value"
-            >
-              {incomeVsExpense.map((entry, index) => (
-                <Cell key={`cell-${index}`} fill={entry.color} />
+        {/* Mobile */}
+        <div className="block sm:hidden">
+          <ResponsiveContainer width="100%" height={280}>
+            <PieChart>
+              <Pie
+                data={incomeVsExpense}
+                cx="50%"
+                cy="50%"
+                labelLine={false}
+                label={false}
+                outerRadius={90}
+                fill="#8884d8"
+                dataKey="value"
+              >
+                {incomeVsExpense.map((entry, index) => (
+                  <Cell key={`cell-${index}`} fill={entry.color} />
+                ))}
+              </Pie>
+              <Tooltip content={<CustomTooltip />} />
+            </PieChart>
+          </ResponsiveContainer>
+          {incomeVsExpense.length > 0 && (
+            <div className="mt-3 flex items-center justify-center gap-4 text-sm">
+              {incomeVsExpense.map((item) => (
+                <div key={item.name} className="flex items-center gap-2">
+                  <span
+                    className="inline-block w-2.5 h-2.5 rounded-full"
+                    style={{ backgroundColor: item.color }}
+                  />
+                  <span className="text-gray-300">
+                    {item.name}: <span className="text-white">{formatCurrency(item.value)}</span>
+                  </span>
+                </div>
               ))}
-            </Pie>
-            <Tooltip content={<CustomTooltip />} />
-          </PieChart>
-        </ResponsiveContainer>
+            </div>
+          )}
+        </div>
+
+        {/* Desktop: chart with labels; */}
+        <div className="hidden sm:block">
+          <ResponsiveContainer width="100%" height={280}>
+            <PieChart>
+              <Pie
+                data={incomeVsExpense}
+                cx="50%"
+                cy="50%"
+                labelLine={false}
+                label={({ name, value }) => `${name}: ${formatCurrency(Number(value ?? 0))}`}
+                outerRadius={90}
+                fill="#8884d8"
+                dataKey="value"
+              >
+                {incomeVsExpense.map((entry, index) => (
+                  <Cell key={`cell-${index}`} fill={entry.color} />
+                ))}
+              </Pie>
+              <Tooltip content={<CustomTooltip />} />
+            </PieChart>
+          </ResponsiveContainer>
+        </div>
       </div>
 
       <div>

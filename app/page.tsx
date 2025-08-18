@@ -5,7 +5,7 @@ import { AppLoader } from "@/components/app-loader"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Plus, TrendingUp, TrendingDown, PieChart, Settings, Layers, Sparkles, ArrowRight } from "lucide-react"
-import { useRouter } from "next/navigation"
+import { usePathname, useRouter } from "next/navigation"
 import { DatabaseService } from "@/lib/database"
 import { formatCurrency } from "@/lib/utils"
 import { MonthNavigator } from "@/components/month-navigator"
@@ -38,10 +38,44 @@ export default function Dashboard() {
   const [isLoading, setIsLoading] = useState(true)
   const [hasData, setHasData] = useState(false)
   const router = useRouter()
+  const pathname = usePathname()
+
+  useEffect(() => {
+    // Initialize from query params (year, month)
+    try {
+      const searchParams = new URLSearchParams(window.location.search)
+      const yearParam = searchParams.get("year")
+      const monthParam = searchParams.get("month")
+      if (yearParam && monthParam) {
+        const year = parseInt(yearParam)
+        const month = parseInt(monthParam)
+        if (Number.isFinite(year) && Number.isFinite(month) && month >= 1 && month <= 12) {
+          setCurrentDate(new Date(year, month - 1, 1))
+        }
+      }
+    } catch {}
+  }, [])
 
   useEffect(() => {
     loadDashboardData()
   }, [currentDate])
+
+  // Keep URL in sync with current month so bottom nav reads it
+  useEffect(() => {
+    try {
+      const y = currentDate.getFullYear()
+      const m = currentDate.getMonth() + 1
+      try {
+        localStorage.setItem("selectedYear", String(y))
+        localStorage.setItem("selectedMonth", String(m))
+      } catch {}
+      const sp = new URLSearchParams(window.location.search)
+      const currY = Number.parseInt(sp.get("year") || "")
+      const currM = Number.parseInt(sp.get("month") || "")
+      if (currY === y && currM === m) return
+      router.replace(`${pathname}?year=${y}&month=${m}`)
+    } catch {}
+  }, [currentDate, pathname, router])
 
   const loadDashboardData = async () => {
     try {
@@ -199,17 +233,27 @@ export default function Dashboard() {
       <div className="max-w-7xl mx-auto space-y-8">
         {/* Header */}
         <div className="flex justify-between items-center">
-          <div>
+          <div className="flex items-center space-x-3">
+            <img
+              src="/easyExpenses/icon.png"
+              onError={(e) => {
+                // fallback to logo if icon is not available
+                (e.currentTarget as HTMLImageElement).src = "/easyExpenses/logo.png"
+              }}
+              alt="Easy Expenses Icon"
+              className="w-8 h-8 rounded-md"
+            />
             <h1 className="text-3xl font-bold bg-gradient-to-r from-green-400 to-emerald-300 bg-clip-text text-transparent">
               Easy Expenses
             </h1>
           </div>
           <Button
             onClick={() => router.push("/transactions/add")}
-            className="bg-green-600/80 hover:bg-green-600 backdrop-blur-sm border border-green-500/30 shadow-lg px-6"
+            aria-label={t("newTransaction")}
+            className="bg-green-600/80 hover:bg-green-600 backdrop-blur-sm border border-green-500/30 shadow-lg px-0 md:px-6 w-10 h-10 md:w-auto md:h-auto rounded-full md:rounded-md"
           >
-            <Plus className="w-4 h-4 mr-2" />
-            {t("newTransaction")}
+            <Plus className="w-5 h-5 md:w-4 md:h-4 md:mr-2" />
+            <span className="hidden md:inline">{t("newTransaction")}</span>
           </Button>
         </div>
 
@@ -253,42 +297,12 @@ export default function Dashboard() {
 
         {/* Charts */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-          <div className="bg-black/40 backdrop-blur-xl border border-white/10 rounded-xl shadow-2xl p-6">
+          <div className="bg-black/40 backdrop-blur-xl border border-white/10 rounded-xl shadow-2xl p-6 h-[760px]">
             <TransactionChart transactions={data.transactions} />
           </div>
-          <div className="bg-black/40 backdrop-blur-xl border border-white/10 rounded-xl shadow-2xl p-6">
+          <div className="bg-black/40 backdrop-blur-xl border border-white/10 rounded-xl shadow-2xl p-6 h-[760px] overflow-y-auto">
             <CategoryOverview categories={data.categories} transactions={data.transactions} />
           </div>
-        </div>
-
-        {/* Quick Actions */}
-        <div className="grid grid-cols-2 md:grid-cols-3 gap-6">
-          <Button
-            onClick={() => router.push("/categories")}
-            className="h-24 bg-black/40 backdrop-blur-xl border border-white/10 hover:border-purple-500/50 hover:bg-purple-600/20 text-white shadow-2xl transition-all duration-300 flex flex-col items-center justify-center space-y-2"
-            variant="ghost"
-          >
-            <Layers className="w-8 h-8 text-purple-400" />
-            <span className="text-sm font-medium">{t("categories")}</span>
-          </Button>
-
-          <Button
-            onClick={() => router.push("/transactions")}
-            className="h-24 bg-black/40 backdrop-blur-xl border border-white/10 hover:border-blue-500/50 hover:bg-blue-600/20 text-white shadow-2xl transition-all duration-300 flex flex-col items-center justify-center space-y-2"
-            variant="ghost"
-          >
-            <TrendingUp className="w-8 h-8 text-blue-400" />
-            <span className="text-sm font-medium">{t("transactionsAndReports")}</span>
-          </Button>
-
-          <Button
-            onClick={() => router.push("/settings")}
-            className="h-24 bg-black/40 backdrop-blur-xl border border-white/10 hover:border-gray-500/50 hover:bg-gray-600/20 text-white shadow-2xl transition-all duration-300 flex flex-col items-center justify-center space-y-2 col-span-2 md:col-span-1"
-            variant="ghost"
-          >
-            <Settings className="w-8 h-8 text-gray-400" />
-            <span className="text-sm font-medium">{t("settings")}</span>
-          </Button>
         </div>
       </div>
       </div>

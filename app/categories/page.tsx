@@ -107,7 +107,7 @@ export default function CategoriesPage() {
       <div className="min-h-screen text-white p-4">
         <div className="max-w-5xl mx-auto space-y-8">
         {/* Header */}
-        <div className="flex items-center justify-between">
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
           <div className="flex items-center space-x-4">
             <Button
               variant="ghost"
@@ -125,7 +125,7 @@ export default function CategoriesPage() {
           </div>
           <Button
             onClick={() => setShowForm(true)}
-            className="bg-purple-600/80 hover:bg-purple-600 backdrop-blur-sm border border-purple-500/30 shadow-lg px-6"
+            className="bg-purple-600/80 hover:bg-purple-600 backdrop-blur-sm border border-purple-500/30 shadow-lg px-6 w-full sm:w-auto sm:ml-auto"
           >
             <Plus className="w-4 h-4 mr-2" />
             {t("newCategory")}
@@ -177,7 +177,7 @@ export default function CategoriesPage() {
                 <CardHeader>
                   <div className="flex justify-between items-start">
                     <div className="flex-1">
-                      <CardTitle className="text-white text-xl mb-2">
+                      <CardTitle className="text-white text-xl mb-4">
                         <div className="flex items-center space-x-3">
                           <span>{category.name}</span>
                           {category.hasRules && (
@@ -187,11 +187,6 @@ export default function CategoriesPage() {
                           )}
                         </div>
                       </CardTitle>
-                      {category.notes && (
-                        <p className="text-sm text-gray-400 mt-2 bg-black/20 rounded-lg p-3 border border-white/5">
-                          {category.notes}
-                        </p>
-                      )}
                     </div>
                     <div className="flex space-x-2">
                       <Button
@@ -212,6 +207,11 @@ export default function CategoriesPage() {
                       </Button>
                     </div>
                   </div>
+                  {category.notes && (
+                    <p className="text-sm text-gray-400 mt-3 bg-black/20 rounded-lg p-3 border border-white/5">
+                      {category.notes}
+                    </p>
+                  )}
                 </CardHeader>
 
                 {category.subcategories.length > 0 && (

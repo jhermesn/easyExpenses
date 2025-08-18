@@ -20,7 +20,7 @@ interface Transaction {
   subcategoryId?: string
   type: "income" | "expense"
   amount: number
-  description: string
+  title: string
   transactionType: "fixed" | "unique" | "installment"
   date: Date
   dayOfMonth?: number // Para transações fixas
@@ -88,6 +88,11 @@ export class DatabaseService {
         // Settings store
         if (!db.objectStoreNames.contains("settings")) {
           db.createObjectStore("settings", { keyPath: "key" })
+        }
+
+        // Fixed transaction skips store
+        if (!db.objectStoreNames.contains("fixedSkips")) {
+          db.createObjectStore("fixedSkips", { keyPath: "id" })
         }
       }
     })
@@ -195,6 +200,19 @@ export class DatabaseService {
     })
   }
 
+  async getTransaction(id: string): Promise<Transaction | undefined> {
+    await this.ensureInitialized()
+
+    return new Promise((resolve, reject) => {
+      const transaction = this.db!.transaction(["transactions"], "readonly")
+      const store = transaction.objectStore("transactions")
+      const request = store.get(id)
+
+      request.onsuccess = () => resolve(request.result as Transaction | undefined)
+      request.onerror = () => reject(request.error)
+    })
+  }
+
   async getTransactionsByMonth(year: number, month: number): Promise<Transaction[]> {
     await this.ensureInitialized()
 
@@ -237,7 +255,13 @@ export class DatabaseService {
       const allTransactions = await this.getTransactions()
       const fixedTemplates = allTransactions.filter((t) => t.transactionType === "fixed")
 
-      return fixedTemplates.map((template) => {
+      // Buscar skips para o mês/ano corrente e montar conjunto de templates a pular
+      const skips = await this.getFixedSkipsForMonth(year, month)
+      const skippedTemplateIds = new Set<string>(skips.map((s) => s.templateId))
+
+      return fixedTemplates
+        .filter((template) => !skippedTemplateIds.has(template.id))
+        .map((template) => {
         // Calcular o dia correto
         const lastDayOfMonth = new Date(year, month, 0).getDate()
         const dayToUse = Math.min(template.dayOfMonth || 1, lastDayOfMonth)
@@ -254,6 +278,38 @@ export class DatabaseService {
       console.error("[ERRO] Erro ao gerar transações fixas:", error)
       return []
     }
+  }
+
+  // Fixed skips: marca um template para não aparecer em um mês específico
+  async addFixedSkip(templateId: string, year: number, month: number): Promise<void> {
+    await this.ensureInitialized()
+
+    const id = `${templateId}-${year}-${month}`
+
+    return new Promise((resolve, reject) => {
+      const tx = this.db!.transaction(["fixedSkips"], "readwrite")
+      const store = tx.objectStore("fixedSkips")
+      const request = store.put({ id, templateId, year, month })
+
+      request.onsuccess = () => resolve()
+      request.onerror = () => reject(request.error)
+    })
+  }
+
+  async getFixedSkipsForMonth(year: number, month: number): Promise<Array<{ id: string; templateId: string; year: number; month: number }>> {
+    await this.ensureInitialized()
+
+    return new Promise((resolve, reject) => {
+      const tx = this.db!.transaction(["fixedSkips"], "readonly")
+      const store = tx.objectStore("fixedSkips")
+      const request = store.getAll()
+
+      request.onsuccess = () => {
+        const result = (request.result || []).filter((s: any) => s.year === year && s.month === month)
+        resolve(result)
+      }
+      request.onerror = () => reject(request.error)
+    })
   }
 
   async updateTransaction(transaction: Transaction): Promise<void> {
@@ -311,6 +367,36 @@ export class DatabaseService {
             }
           }
           deleteRequest.onerror = () => reject(deleteRequest.error)
+        })
+      }
+      request.onerror = () => reject(request.error)
+    })
+  }
+
+  async renameInstallmentGroup(groupId: string, newBaseTitle: string): Promise<void> {
+    await this.ensureInitialized()
+
+    return new Promise((resolve, reject) => {
+      const transaction = this.db!.transaction(["transactions"], "readwrite")
+      const store = transaction.objectStore("transactions")
+      const request = store.getAll()
+
+      request.onsuccess = () => {
+        const all = (request.result || []) as Transaction[]
+        const affected = all.filter((t) => t.installmentInfo?.groupId === groupId)
+
+        let updated = 0
+        if (affected.length === 0) return resolve()
+
+        affected.forEach((t) => {
+          const newTitle = `${newBaseTitle} (${t.installmentInfo!.current}/${t.installmentInfo!.total})`
+          const updatedTx: Transaction = { ...t, title: newTitle }
+          const putReq = store.put(updatedTx)
+          putReq.onsuccess = () => {
+            updated++
+            if (updated === affected.length) resolve()
+          }
+          putReq.onerror = () => reject(putReq.error)
         })
       }
       request.onerror = () => reject(request.error)

@@ -11,6 +11,11 @@ interface MonthNavigatorProps {
 }
 
 export function MonthNavigator({ currentDate, onDateChange }: MonthNavigatorProps) {
+  const isCurrentMonthSelected = () => {
+    const now = new Date()
+    return now.getFullYear() === currentDate.getFullYear() && now.getMonth() === currentDate.getMonth()
+  }
+
   const goToPreviousMonth = () => {
     const newDate = new Date(currentDate)
     newDate.setMonth(newDate.getMonth() - 1)
@@ -28,7 +33,7 @@ export function MonthNavigator({ currentDate, onDateChange }: MonthNavigatorProp
   }
 
   return (
-    <div className="flex items-center justify-between bg-black/40 backdrop-blur-xl rounded-xl p-6 border border-white/10 shadow-2xl">
+    <div className="flex items-center justify-between gap-4 bg-black/40 backdrop-blur-xl rounded-xl p-6 border border-white/10 shadow-2xl">
       <Button
         variant="ghost"
         size="sm"
@@ -38,13 +43,17 @@ export function MonthNavigator({ currentDate, onDateChange }: MonthNavigatorProp
         <ChevronLeft className="w-5 h-5" />
       </Button>
 
-      <div className="flex items-center space-x-4">
+      <div className="flex items-center space-x-6 md:space-x-8">
         <h2 className="text-2xl font-semibold text-white capitalize">{getMonthName(currentDate)}</h2>
         <Button
           variant="outline"
           size="sm"
           onClick={goToCurrentMonth}
-          className="border-green-500/30 text-green-400 hover:bg-green-600/20 hover:text-green-300 bg-transparent backdrop-blur-sm"
+          className={
+            isCurrentMonthSelected()
+              ? "bg-green-500 text-black border-green-500 hover:bg-green-600 hover:text-white backdrop-blur-sm"
+              : "border-green-500/30 text-green-400 hover:bg-green-600/20 hover:text-green-300 bg-transparent backdrop-blur-sm"
+          }
         >
           {t("today")}
         </Button>

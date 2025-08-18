@@ -18,11 +18,11 @@ import {
   TrendingDown,
   PieChart,
 } from "lucide-react"
-import { useRouter } from "next/navigation"
+import { usePathname, useRouter } from "next/navigation"
 import { DatabaseService } from "@/lib/database"
 import { formatCurrency, formatDate } from "@/lib/utils"
 import { MonthNavigator } from "@/components/month-navigator"
-import { InstallmentDeleteDialog } from "@/components/installment-delete-dialog"
+import { ConfirmDialog } from "@/components/confirm-dialog"
 import { CategoryOverview } from "@/components/category-overview"
 import { exportMonthlyReport } from "@/lib/pdf-export"
 import { getLocale, t, tStatic } from "@/lib/i18n"
@@ -34,7 +34,7 @@ interface Transaction {
   subcategoryId?: string
   type: "income" | "expense"
   amount: number
-  description: string
+  title: string
   transactionType: "fixed" | "unique" | "installment"
   date: Date
   installmentInfo?: {
@@ -71,15 +71,52 @@ export default function TransactionsPage() {
   const [isLoading, setIsLoading] = useState(true)
   const [isExporting, setIsExporting] = useState(false)
   const router = useRouter()
+  const pathname = usePathname()
 
-  const [deleteDialog, setDeleteDialog] = useState<{
+  const [dialogState, setDialogState] = useState<{
     open: boolean
-    transaction: Transaction | null
-  }>({ open: false, transaction: null })
+    title: string
+    description?: string
+    actions: Array<{ label: string; color?: "default" | "yellow" | "red"; onClick: () => void }>
+  }>({ open: false, title: "", description: "", actions: [] })
+
+  useEffect(() => {
+    // Initialize from query params (year, month)
+    try {
+      const searchParams = new URLSearchParams(window.location.search)
+      const yearParam = searchParams.get("year")
+      const monthParam = searchParams.get("month")
+      if (yearParam && monthParam) {
+        const year = parseInt(yearParam)
+        const month = parseInt(monthParam)
+        if (Number.isFinite(year) && Number.isFinite(month) && month >= 1 && month <= 12) {
+          const initial = new Date(year, month - 1, 1)
+          setCurrentDate(initial)
+        }
+      }
+    } catch {}
+  }, [])
 
   useEffect(() => {
     loadData()
   }, [currentDate])
+
+  // Keep URL query params in sync with selected month
+  useEffect(() => {
+    try {
+      const y = currentDate.getFullYear()
+      const m = currentDate.getMonth() + 1
+      try {
+        localStorage.setItem("selectedYear", String(y))
+        localStorage.setItem("selectedMonth", String(m))
+      } catch {}
+      const sp = new URLSearchParams(window.location.search)
+      const currY = Number.parseInt(sp.get("year") || "")
+      const currM = Number.parseInt(sp.get("month") || "")
+      if (currY === y && currM === m) return
+      router.replace(`${pathname}?year=${y}&month=${m}`)
+    } catch {}
+  }, [currentDate, pathname, router])
 
   useEffect(() => {
     applyFilters()
@@ -114,7 +151,7 @@ export default function TransactionsPage() {
     if (filters.search) {
       filtered = filtered.filter(
         (t) =>
-          t.description.toLowerCase().includes(filters.search.toLowerCase()) ||
+          t.title.toLowerCase().includes(filters.search.toLowerCase()) ||
           t.notes?.toLowerCase().includes(filters.search.toLowerCase()),
       )
     }
@@ -146,44 +183,101 @@ export default function TransactionsPage() {
   }
 
   const handleDeleteTransaction = async (transaction: Transaction) => {
+    const db = DatabaseService.getInstance()
+
     if (transaction.installmentInfo) {
-      setDeleteDialog({ open: true, transaction })
-    } else if (transaction.originalFixedId) {
-      // Para transações fixas geradas, perguntar se quer deletar apenas este mês ou o template
-      if (confirm(t("fixedTransactionDeleteQuestion"))) {
-        // Excluir apenas deste mês - não fazer nada, pois será regenerada
-        alert(t("fixedTransactionCannotDeleteIndividually"))
-      }
-    } else {
-      if (confirm(t("confirmDeleteTransaction"))) {
-        try {
-          const db = DatabaseService.getInstance()
-          await db.deleteTransaction(transaction.id)
-          await loadData()
-        } catch (error) {
-          console.error("[ERRO] Erro ao excluir transação:", error)
-        }
-      }
+      setDialogState({
+        open: true,
+        title: t("installmentDeleteTitle"),
+        description: `${t("installmentDeleteDescription")} (${transaction.installmentInfo.current}/${transaction.installmentInfo.total}).`,
+        actions: [
+          {
+            label: t("deleteOnlyThisInstallment"),
+            color: "yellow",
+            onClick: async () => {
+              try {
+                await db.deleteTransaction(transaction.id)
+                await loadData()
+              } finally {
+                setDialogState((s) => ({ ...s, open: false }))
+              }
+            },
+          },
+          {
+            label: t("deleteAllInstallments"),
+            color: "red",
+            onClick: async () => {
+              try {
+                if (transaction.installmentInfo) {
+                  await db.deleteInstallmentGroup(transaction.installmentInfo.groupId)
+                  await loadData()
+                }
+              } finally {
+                setDialogState((s) => ({ ...s, open: false }))
+              }
+            },
+          },
+        ],
+      })
+      return
     }
-  }
 
-  const handleInstallmentDelete = async (deleteAll: boolean) => {
-    if (!deleteDialog.transaction) return
-
-    try {
-      const db = DatabaseService.getInstance()
-
-      if (deleteAll && deleteDialog.transaction.installmentInfo) {
-        await db.deleteInstallmentGroup(deleteDialog.transaction.installmentInfo.groupId)
-      } else {
-        await db.deleteTransaction(deleteDialog.transaction.id)
-      }
-
-      await loadData()
-      setDeleteDialog({ open: false, transaction: null })
-    } catch (error) {
-      console.error("[ERRO] Erro ao excluir transação:", error)
+    if (transaction.originalFixedId) {
+      setDialogState({
+        open: true,
+        title: t("fixed"),
+        description: t("fixedTransactionDeleteQuestion"),
+        actions: [
+          {
+            label: `${t("delete")} (${t("today")})`,
+            color: "yellow",
+            onClick: async () => {
+              try {
+                const year = currentDate.getFullYear()
+                const month = currentDate.getMonth() + 1
+                await db.addFixedSkip(transaction.originalFixedId!, year, month)
+                await loadData()
+              } finally {
+                setDialogState((s) => ({ ...s, open: false }))
+              }
+            },
+          },
+          {
+            label: t("delete"),
+            color: "red",
+            onClick: async () => {
+              try {
+                await db.deleteTransaction(transaction.originalFixedId!)
+                await loadData()
+              } finally {
+                setDialogState((s) => ({ ...s, open: false }))
+              }
+            },
+          },
+        ],
+      })
+      return
     }
+
+    setDialogState({
+      open: true,
+      title: t("confirmDeleteTransaction"),
+      description: transaction.title,
+      actions: [
+        {
+          label: t("delete"),
+          color: "red",
+          onClick: async () => {
+            try {
+              await db.deleteTransaction(transaction.id)
+              await loadData()
+            } finally {
+              setDialogState((s) => ({ ...s, open: false }))
+            }
+          },
+        },
+      ],
+    })
   }
 
   const handleExportPDF = async () => {
@@ -229,11 +323,13 @@ export default function TransactionsPage() {
       <div className="min-h-screen text-white p-4">
       <div className="max-w-7xl mx-auto space-y-8">
         {/* Header */}
-        <div className="flex items-center justify-between">
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
           <div className="flex items-center space-x-4">
             <Button
               variant="ghost"
-              onClick={() => router.push("/")}
+              onClick={() =>
+                router.push(`/?year=${currentDate.getFullYear()}&month=${currentDate.getMonth() + 1}`)
+              }
               className="text-green-400 hover:bg-green-600/20 backdrop-blur-sm border border-green-500/20"
             >
               <ArrowLeft className="w-4 h-4" />
@@ -245,11 +341,11 @@ export default function TransactionsPage() {
               <p className="text-gray-400 mt-1">{t("transactionsPageSubtitle")}</p>
             </div>
           </div>
-          <div className="flex space-x-3">
+          <div className="grid grid-cols-2 gap-2 w-full sm:w-auto sm:ml-auto sm:flex sm:flex-row sm:gap-3">
             <Button
               onClick={handleExportPDF}
               disabled={isExporting || transactions.length === 0}
-              className="bg-blue-600/80 hover:bg-blue-600 backdrop-blur-sm border border-blue-500/30 shadow-lg disabled:opacity-50"
+              className="h-11 bg-blue-600/80 hover:bg-blue-600 backdrop-blur-sm border border-blue-500/30 shadow-lg disabled:opacity-50 w-full sm:w-auto"
             >
               {isExporting ? (
                 <>
@@ -265,7 +361,8 @@ export default function TransactionsPage() {
             </Button>
             <Button
               onClick={() => router.push("/transactions/add")}
-              className="bg-green-600/80 hover:bg-green-600 backdrop-blur-sm border border-green-500/30 shadow-lg"
+              aria-label={t("newTransaction")}
+              className="h-11 bg-green-600/80 hover:bg-green-600 backdrop-blur-sm border border-green-500/30 shadow-lg w-full sm:w-auto rounded-md"
             >
               <Plus className="w-4 h-4 mr-2" />
               {t("newTransaction")}
@@ -404,62 +501,24 @@ export default function TransactionsPage() {
                     key={transaction.id}
                     className="bg-black/20 backdrop-blur-sm p-4 rounded-lg border border-white/5 hover:border-white/10 transition-all duration-300"
                   >
-                    <div className="flex justify-between items-start">
-                      <div className="flex-1">
-                        <div className="flex items-center space-x-3 mb-2">
-                          <h3 className="font-medium text-white">{transaction.description}</h3>
-                          <span
-                            className={`text-xs px-2 py-1 rounded-full backdrop-blur-sm ${
-                              transaction.type === "income"
-                                ? "bg-green-600/20 text-green-400 border border-green-500/30"
-                                : "bg-red-600/20 text-red-400 border border-red-500/30"
-                            }`}
-                          >
-                            {transaction.type === "income" ? "Entrada" : "Saída"}
-                          </span>
-                          {transaction.transactionType === "fixed" && (
-                            <span className="text-xs px-2 py-1 rounded-full bg-blue-600/20 text-blue-400 border border-blue-500/30">
-                              Fixa
-                            </span>
-                          )}
-                          {transaction.originalFixedId && (
-                            <span className="text-xs px-2 py-1 rounded-full bg-blue-600/20 text-blue-400 border border-blue-500/30">
-                              Fixa
-                            </span>
-                          )}
-                          {transaction.installmentInfo && (
-                            <span className="text-xs px-2 py-1 rounded-full bg-purple-600/20 text-purple-400 border border-purple-500/30">
-                              {transaction.installmentInfo.current}/{transaction.installmentInfo.total}
-                            </span>
-                          )}
-                        </div>
-
-                        <div className="text-sm text-gray-400 space-y-1">
-                          <div>Categoria: {getCategoryName(transaction.categoryId)}</div>
-                          {transaction.subcategoryId && (
-                            <div>
-                              Subcategoria: {getSubcategoryName(transaction.categoryId, transaction.subcategoryId)}
-                            </div>
-                          )}
-                          <div>Data: {formatDate(new Date(transaction.date))}</div>
-                          {transaction.notes && <div>Obs: {transaction.notes}</div>}
-                        </div>
-                      </div>
-
-                      <div className="flex items-center space-x-3">
+                    <div className="space-y-3">
+                      <div className="flex items-center justify-between">
                         <div
                           className={`text-lg font-bold ${
                             transaction.type === "income" ? "text-green-400" : "text-red-400"
                           }`}
                         >
                           {transaction.type === "income" ? "+" : "-"}
-                          {formatCurrency(transaction.amount)}
+                          <span className="whitespace-nowrap">{formatCurrency(transaction.amount)}</span>
                         </div>
-
                         <div className="flex space-x-1">
                           <Button
                             variant="ghost"
                             size="sm"
+                            onClick={() => {
+                              const idToEdit = transaction.originalFixedId || transaction.id
+                              router.push(`/transactions/edit?id=${idToEdit}`)
+                            }}
                             className="text-blue-400 hover:bg-blue-600/20 backdrop-blur-sm"
                           >
                             <Edit className="w-4 h-4" />
@@ -474,6 +533,45 @@ export default function TransactionsPage() {
                           </Button>
                         </div>
                       </div>
+
+                      <div className="flex items-center flex-wrap gap-x-3 gap-y-2">
+                        <h3 className="font-medium text-white break-words">{transaction.title}</h3>
+                        <span
+                          className={`text-xs px-2 py-1 rounded-full backdrop-blur-sm ${
+                            transaction.type === "income"
+                              ? "bg-green-600/20 text-green-400 border border-green-500/30"
+                              : "bg-red-600/20 text-red-400 border border-red-500/30"
+                          }`}
+                        >
+                          {transaction.type === "income" ? "Entrada" : "Saída"}
+                        </span>
+                        {transaction.transactionType === "fixed" && (
+                          <span className="text-xs px-2 py-1 rounded-full bg-blue-600/20 text-blue-400 border border-blue-500/30">
+                            Fixa
+                          </span>
+                        )}
+                        {transaction.originalFixedId && (
+                          <span className="text-xs px-2 py-1 rounded-full bg-blue-600/20 text-blue-400 border border-blue-500/30">
+                            Fixa
+                          </span>
+                        )}
+                        {transaction.installmentInfo && (
+                          <span className="text-xs px-2 py-1 rounded-full bg-purple-600/20 text-purple-400 border border-purple-500/30">
+                            {transaction.installmentInfo.current}/{transaction.installmentInfo.total}
+                          </span>
+                        )}
+                      </div>
+
+                      <div className="text-sm text-gray-400 space-y-1">
+                        <div>Categoria: {getCategoryName(transaction.categoryId)}</div>
+                        {transaction.subcategoryId && (
+                          <div>
+                            Subcategoria: {getSubcategoryName(transaction.categoryId, transaction.subcategoryId)}
+                          </div>
+                        )}
+                        <div>Data: {formatDate(new Date(transaction.date))}</div>
+                        {transaction.notes && <div>Obs: {transaction.notes}</div>}
+                      </div>
                     </div>
                   </div>
                 ))}
@@ -482,12 +580,13 @@ export default function TransactionsPage() {
           </CardContent>
         </Card>
 
-        <InstallmentDeleteDialog
-          open={deleteDialog.open}
-          onOpenChange={(open) => setDeleteDialog({ open, transaction: null })}
-          onConfirm={handleInstallmentDelete}
-          currentInstallment={deleteDialog.transaction?.installmentInfo?.current || 1}
-          totalInstallments={deleteDialog.transaction?.installmentInfo?.total || 1}
+        <ConfirmDialog
+          open={dialogState.open}
+          onOpenChange={(open) => setDialogState((s) => ({ ...s, open }))}
+          title={dialogState.title}
+          description={dialogState.description}
+          actions={dialogState.actions}
+          cancelLabel={t("cancel")}
         />
       </div>
     </div>

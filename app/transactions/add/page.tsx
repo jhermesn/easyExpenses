@@ -40,7 +40,7 @@ export default function AddTransactionPage() {
     categoryId: "",
     subcategoryId: "",
     amount: "",
-    description: "",
+    title: "",
     transactionType: "unique" as "fixed" | "unique" | "installment",
     date: new Date().toISOString().split("T")[0],
     dayOfMonth: "1",
@@ -107,12 +107,15 @@ export default function AddTransactionPage() {
       newErrors.push(t("invalidAmount"))
     }
 
-    if (!formData.description.trim()) {
-      newErrors.push(`${t("description")} ${t("required")}`)
+    if (!formData.title.trim()) {
+      newErrors.push(`${t("title")} ${t("required")}`)
     }
 
-    if (formData.transactionType === "installment" && Number.parseInt(formData.installments) < 2) {
-      newErrors.push(t("invalidInstallments"))
+    if (formData.transactionType === "installment") {
+      const installmentsNumber = Number.parseInt(formData.installments)
+      if (!Number.isFinite(installmentsNumber) || installmentsNumber < 2) {
+        newErrors.push(t("invalidInstallments"))
+      }
     }
 
     // Entradas não podem ser parceladas
@@ -169,7 +172,7 @@ export default function AddTransactionPage() {
             subcategoryId: formData.subcategoryId || undefined,
             type: formData.type,
             amount: amount / installments,
-            description: `${formData.description} (${i + 1}/${installments})`,
+            title: `${formData.title} (${i + 1}/${installments})`,
             transactionType: "unique",
             date: installmentDate,
             installmentInfo: {
@@ -186,7 +189,7 @@ export default function AddTransactionPage() {
           subcategoryId: formData.type === "expense" ? formData.subcategoryId || undefined : undefined, // Subcategoria apenas para saídas
           type: formData.type,
           amount,
-          description: formData.description,
+          title: formData.title,
           transactionType: formData.transactionType,
           date: formData.transactionType === "fixed" ? new Date() : new Date(formData.date),
           dayOfMonth: formData.transactionType === "fixed" ? Number.parseInt(formData.dayOfMonth) : undefined,
@@ -367,14 +370,7 @@ export default function AddTransactionPage() {
                 </div>
               )}
 
-              {/* Info for income */}
-              {formData.type === "income" && (
-                <div className="bg-blue-900/20 backdrop-blur-sm border border-blue-500/30 rounded-lg p-4">
-                  <p className="text-blue-400 text-sm">💡 {t("incomeInfo")}</p>
-                </div>
-              )}
-
-              {/* Amount and Description */}
+              {/* Amount and Title */}
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div className="space-y-3">
                   <Label className="text-gray-300 text-sm font-medium">{t("amount")}</Label>
@@ -408,20 +404,17 @@ export default function AddTransactionPage() {
                       ))}
                     </SelectContent>
                   </Select>
-                  {formData.type === "income" && (
-                    <p className="text-xs text-gray-400">{t("incomeCanBeUniqueOrFixed")}</p>
-                  )}
                 </div>
               </div>
 
-              {/* Description */}
+              {/* Title */}
               <div className="space-y-3">
-                <Label className="text-gray-300 text-sm font-medium">{t("description")}</Label>
+                <Label className="text-gray-300 text-sm font-medium">{t("title")}</Label>
                 <Input
-                  value={formData.description}
-                  onChange={(e) => setFormData((prev) => ({ ...prev, description: e.target.value }))}
+                  value={formData.title}
+                  onChange={(e) => setFormData((prev) => ({ ...prev, title: e.target.value }))}
                   className="bg-black/40 backdrop-blur-sm border-white/10 text-white placeholder:text-gray-500 focus:border-green-500/50 transition-all duration-300"
-                  placeholder={formData.type === "income" ? t("descriptionPlaceholderIncome") : t("descriptionPlaceholderExpense")}
+                  placeholder={formData.type === "income" ? t("titlePlaceholderIncome") : t("titlePlaceholderExpense")}
                 />
               </div>
 
@@ -475,6 +468,7 @@ export default function AddTransactionPage() {
                       min="2"
                       value={formData.installments}
                       onChange={(e) => setFormData((prev) => ({ ...prev, installments: e.target.value }))}
+                      required={formData.transactionType === "installment"}
                       className="bg-black/40 backdrop-blur-sm border-white/10 text-white placeholder:text-gray-500 focus:border-green-500/50 transition-all duration-300"
                       placeholder={t("installmentsPlaceholder")}
                     />

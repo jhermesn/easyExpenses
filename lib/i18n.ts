@@ -13,6 +13,7 @@ export interface Translations {
   saving: string
   cancel: string
   delete: string
+  cannotUndo: string
   edit: string
   add: string
   loading: string
@@ -74,7 +75,8 @@ export interface Translations {
 
   // Transactions
   amount: string
-  description: string
+  transaction: string
+  title: string
   transactionType: string
   date: string
   dayOfMonth: string
@@ -83,8 +85,8 @@ export interface Translations {
   total: string
   // Transactions placeholders
   amountPlaceholder: string
-  descriptionPlaceholderIncome: string
-  descriptionPlaceholderExpense: string
+  titlePlaceholderIncome: string
+  titlePlaceholderExpense: string
   dayOfMonthPlaceholder: string
   installmentsPlaceholder: string
   transactionNotesPlaceholder: string
@@ -93,8 +95,6 @@ export interface Translations {
   searchByTitlePlaceholder: string
   selectACategory: string
   selectASubcategory: string
-  incomeInfo: string
-  incomeCanBeUniqueOrFixed: string
   firstInstallmentDate: string
   incomeCannotBeInstallment: string
   subcategoryRequiredForRuleBasedExpense: string
@@ -106,6 +106,10 @@ export interface Translations {
   unique: string
   fixed: string
   installment: string
+  deleteOnlyThisInstallment: string
+  deleteAllInstallments: string
+  installmentDeleteTitle: string
+  installmentDeleteDescription: string
 
   // Validation
   required: string
@@ -132,6 +136,9 @@ export interface Translations {
   week: string
   distributionRules: string
   addIncomeToCalculateRules: string
+
+  // Edit/Installments
+  renameAllInstallments: string
 
   // Settings
   language: string
@@ -174,7 +181,7 @@ const translations: Record<Locale, Translations> = {
     // Navigation
     dashboard: "Dashboard",
     categories: "Categorias",
-    transactions: "Extratos",
+    transactions: "Extrato",
     reports: "Relatórios",
     settings: "Configurações",
 
@@ -183,6 +190,7 @@ const translations: Record<Locale, Translations> = {
     saving: "Salvando...",
     cancel: "Cancelar",
     delete: "Excluir",
+    cannotUndo: "Esta ação não pode ser desfeita.",
     edit: "Editar",
     add: "Adicionar",
     loading: "Carregando...",
@@ -245,7 +253,8 @@ const translations: Record<Locale, Translations> = {
 
     // Transactions
     amount: "Valor",
-    description: "Descrição",
+    title: "Título",
+    transaction: "Transação",
     transactionType: "Tipo de Transação",
     date: "Data",
     dayOfMonth: "Dia do Mês (1-31)",
@@ -253,8 +262,8 @@ const translations: Record<Locale, Translations> = {
     installmentPreview: "Prévia do Parcelamento:",
     total: "Total",
     amountPlaceholder: "0,00",
-    descriptionPlaceholderIncome: "Ex: Salário, Freelance, Venda",
-    descriptionPlaceholderExpense: "Ex: Supermercado, Combustível, Conta de Luz",
+    titlePlaceholderIncome: "Ex: Salário, Freelance, Venda",
+    titlePlaceholderExpense: "Ex: Supermercado, Combustível, Conta de Luz",
     dayOfMonthPlaceholder: "1",
     installmentsPlaceholder: "12",
     transactionNotesPlaceholder: "Observações sobre esta transação...",
@@ -263,9 +272,6 @@ const translations: Record<Locale, Translations> = {
     searchByTitlePlaceholder: "Buscar por título...",
     selectACategory: "Selecione uma categoria",
     selectASubcategory: "Selecione uma subcategoria",
-    incomeInfo:
-      "Entradas: Não possuem subcategorias nem parcelamento. Use apenas para receitas como salários, vendas, etc.",
-    incomeCanBeUniqueOrFixed: "Entradas podem ser únicas ou fixas (mensais), mas não parceladas",
     firstInstallmentDate: "Data da Primeira Parcela",
     incomeCannotBeInstallment: "Entradas não podem ser parceladas",
     subcategoryRequiredForRuleBasedExpense: "Subcategoria é obrigatória para categorias de saída com regras",
@@ -277,6 +283,10 @@ const translations: Record<Locale, Translations> = {
     unique: "Única",
     fixed: "Fixa (mensal)",
     installment: "Parcelada",
+    deleteOnlyThisInstallment: "Excluir só esta parcela",
+    deleteAllInstallments: "Excluir todas as parcelas",
+    installmentDeleteTitle: "Excluir parcelamento",
+    installmentDeleteDescription: "Escolha o que deseja excluir. Parcela atual:",
 
     // Validation
     required: "é obrigatório",
@@ -291,7 +301,7 @@ const translations: Record<Locale, Translations> = {
     confirmDeleteTransaction: "Tem certeza que deseja excluir esta transação?",
     confirmDeleteCategory: "Tem certeza que deseja excluir esta categoria?",
     fixedTransactionDeleteQuestion:
-      "Esta é uma transação fixa. Deseja excluir apenas deste mês (Sim) ou cancelar a transação fixa permanentemente (Não)?",
+      "Esta é uma transação fixa. O que deseja excluir? Apenas este mês ou cancelar a transação fixa permanentemente?",
     fixedTransactionCannotDeleteIndividually:
       "Transações fixas não podem ser excluídas individualmente. Para cancelar permanentemente, edite a transação original.",
     editOriginalTransactionToCancel: "Edite a transação original para cancelar permanentemente.",
@@ -307,6 +317,9 @@ const translations: Record<Locale, Translations> = {
     distributionRules: "Regras de distribuição (baseado no total de entradas)",
     addIncomeToCalculateRules: "Adicione entradas para calcular o orçamento das regras",
 
+    // Edit/Installments
+    renameAllInstallments: "Renomear todas as parcelas",
+
     // Settings
     language: "Idioma",
     currency: "Moeda",
@@ -318,7 +331,7 @@ const translations: Record<Locale, Translations> = {
     appInfo: "Informações do App",
     appDetails: "Detalhes sobre o aplicativo",
     version: "Versão",
-    versionCode: "1.0.0",
+    versionCode: "2.0.0",
     author: "Jorge Hermes",
     developedBy: "Desenvolvido por",
     appName: "Easy Expenses",
@@ -354,6 +367,7 @@ const translations: Record<Locale, Translations> = {
     saving: "Saving...",
     cancel: "Cancel",
     delete: "Delete",
+    cannotUndo: "This action cannot be undone.",
     edit: "Edit",
     add: "Add",
     loading: "Loading...",
@@ -416,7 +430,8 @@ const translations: Record<Locale, Translations> = {
 
     // Transactions
     amount: "Amount",
-    description: "Description",
+    transaction: "Transaction",
+    title: "Title",
     transactionType: "Transaction Type",
     date: "Date",
     dayOfMonth: "Day of Month (1-31)",
@@ -424,8 +439,8 @@ const translations: Record<Locale, Translations> = {
     installmentPreview: "Installment Preview:",
     total: "Total",
     amountPlaceholder: "0.00",
-    descriptionPlaceholderIncome: "e.g., Salary, Freelance, Sale",
-    descriptionPlaceholderExpense: "e.g., Groceries, Gas, Electricity Bill",
+    titlePlaceholderIncome: "e.g., Salary, Freelance, Sale",
+    titlePlaceholderExpense: "e.g., Groceries, Gas, Electricity Bill",
     dayOfMonthPlaceholder: "1",
     installmentsPlaceholder: "12",
     transactionNotesPlaceholder: "Notes about this transaction...",
@@ -434,9 +449,6 @@ const translations: Record<Locale, Translations> = {
     searchByTitlePlaceholder: "Search by title...",
     selectACategory: "Select a category",
     selectASubcategory: "Select a subcategory",
-    incomeInfo:
-      "Income: Do not have subcategories or installments. Use only for revenue such as salary, sales, etc.",
-    incomeCanBeUniqueOrFixed: "Income can be one-time or fixed (monthly), but not installment",
     firstInstallmentDate: "First Installment Date",
     incomeCannotBeInstallment: "Income cannot be installment",
     subcategoryRequiredForRuleBasedExpense: "Subcategory is required for rule-based expense categories",
@@ -448,6 +460,10 @@ const translations: Record<Locale, Translations> = {
     unique: "One-time",
     fixed: "Fixed (monthly)",
     installment: "Installment",
+    deleteOnlyThisInstallment: "Delete only this installment",
+    deleteAllInstallments: "Delete all installments",
+    installmentDeleteTitle: "Delete installments",
+    installmentDeleteDescription: "Choose what to delete. Current installment:",
 
     // Validation
     required: "is required",
@@ -462,7 +478,7 @@ const translations: Record<Locale, Translations> = {
     confirmDeleteTransaction: "Are you sure you want to delete this transaction?",
     confirmDeleteCategory: "Are you sure you want to delete this category?",
     fixedTransactionDeleteQuestion:
-      "This is a fixed transaction. Do you want to delete only this month (Yes) or cancel the fixed transaction permanently (No)?",
+      "This is a fixed transaction. What do you want to delete? Only this month or cancel the fixed transaction permanently?",
     fixedTransactionCannotDeleteIndividually:
       "Fixed transactions cannot be deleted individually. To cancel permanently, edit the original transaction.",
     editOriginalTransactionToCancel: "Edit the original transaction to cancel permanently.",
@@ -478,6 +494,9 @@ const translations: Record<Locale, Translations> = {
     distributionRules: "Distribution rules (based on total income)",
     addIncomeToCalculateRules: "Add income to calculate rule budgets",
 
+    // Edit/Installments
+    renameAllInstallments: "Rename all installments",
+
     // Settings
     language: "Language",
     currency: "Currency",
@@ -489,7 +508,7 @@ const translations: Record<Locale, Translations> = {
     appInfo: "App Info",
     appDetails: "App details",
     version: "Version",
-    versionCode: "1.0.0",
+    versionCode: "2.0.0",
     author: "Jorge Hermes",
     developedBy: "Developed by",
     appName: "Easy Expenses",
@@ -525,6 +544,7 @@ const translations: Record<Locale, Translations> = {
     saving: "Guardando...",
     cancel: "Cancelar",
     delete: "Eliminar",
+    cannotUndo: "Esta acción no se puede deshacer.",
     edit: "Editar",
     add: "Agregar",
     loading: "Cargando...",
@@ -587,7 +607,8 @@ const translations: Record<Locale, Translations> = {
 
     // Transactions
     amount: "Cantidad",
-    description: "Descripción",
+    transaction: "Transacción",
+    title: "Título",
     transactionType: "Tipo de Transacción",
     date: "Fecha",
     dayOfMonth: "Día del Mes (1-31)",
@@ -595,8 +616,8 @@ const translations: Record<Locale, Translations> = {
     installmentPreview: "Vista Previa de Cuotas:",
     total: "Total",
     amountPlaceholder: "0,00",
-    descriptionPlaceholderIncome: "Ej: Salario, Freelance, Venta",
-    descriptionPlaceholderExpense: "Ej: Supermercado, Gasolina, Luz",
+    titlePlaceholderIncome: "Ej: Salario, Freelance, Venta",
+    titlePlaceholderExpense: "Ej: Supermercado, Gasolina, Luz",
     dayOfMonthPlaceholder: "1",
     installmentsPlaceholder: "12",
     transactionNotesPlaceholder: "Notas sobre esta transacción...",
@@ -605,9 +626,6 @@ const translations: Record<Locale, Translations> = {
     searchByTitlePlaceholder: "Buscar por título...",
     selectACategory: "Selecciona una categoría",
     selectASubcategory: "Selecciona una subcategoría",
-    incomeInfo:
-      "Ingresos: No tienen subcategorías ni cuotas. Úsalos sólo para ingresos como salarios, ventas, etc.",
-    incomeCanBeUniqueOrFixed: "Los ingresos pueden ser únicos o fijos (mensuales), pero no en cuotas",
     firstInstallmentDate: "Fecha de la Primera Cuota",
     incomeCannotBeInstallment: "Los ingresos no pueden ser en cuotas",
     subcategoryRequiredForRuleBasedExpense: "La subcategoría es obligatoria para categorías de gasto con reglas",
@@ -619,6 +637,10 @@ const translations: Record<Locale, Translations> = {
     unique: "Única",
     fixed: "Fija (mensual)",
     installment: "A plazos",
+    deleteOnlyThisInstallment: "Eliminar solo esta cuota",
+    deleteAllInstallments: "Eliminar todas las cuotas",
+    installmentDeleteTitle: "Eliminar cuotas",
+    installmentDeleteDescription: "Elige qué deseas eliminar. Cuota actual:",
 
     // Validation
     required: "es requerido",
@@ -633,7 +655,7 @@ const translations: Record<Locale, Translations> = {
     confirmDeleteTransaction: "¿Está seguro de que desea eliminar esta transacción?",
     confirmDeleteCategory: "¿Está seguro de que desea eliminar esta categoría?",
     fixedTransactionDeleteQuestion:
-      "Esta es una transacción fija. ¿Desea eliminar sólo este mes (Sí) o cancelar la transacción fija permanentemente (No)?",
+      "Esta es una transacción fija. ¿Qué desea eliminar? ¿Sólo este mes o cancelar la transacción fija permanentemente?",
     fixedTransactionCannotDeleteIndividually:
       "Las transacciones fijas no pueden ser eliminadas individualmente. Para cancelar permanentemente, edite la transacción original.",
     editOriginalTransactionToCancel: "Edite la transacción original para cancelar permanentemente.",
@@ -649,6 +671,9 @@ const translations: Record<Locale, Translations> = {
     distributionRules: "Reglas de distribución (basadas en el total de ingresos)",
     addIncomeToCalculateRules: "Agrega ingresos para calcular el presupuesto de las reglas",
 
+    // Edit/Installments
+    renameAllInstallments: "Renombrar todas las cuotas",
+
     // Settings
     language: "Idioma",
     currency: "Moneda",
@@ -660,7 +685,7 @@ const translations: Record<Locale, Translations> = {
     appInfo: "Información de la App",
     appDetails: "Detalles de la aplicación",
     version: "Versión",
-    versionCode: "1.0.0",
+    versionCode: "2.0.0",
     author: "Jorge Hermes",
     developedBy: "Desarrollado por",
     appName: "Easy Expenses",

@@ -3,6 +3,7 @@ import type { Metadata, Viewport } from "next"
 import { Inter } from "next/font/google"
 import "../styles/globals.css"
 import { Footer } from "@/components/footer"
+import { BottomNav } from "@/components/bottom-nav"
 
 const inter = Inter({ subsets: ["latin"] })
 
@@ -27,7 +28,7 @@ export const metadata: Metadata = {
     ],
   },
   twitter: {
-    card: "summary",
+    card: "summary_large_image",
     title: "Easy Expenses",
     description: "Nunca foi tão fácil controlar suas finanças",
     images: ["/easyExpenses/logo.png"],
@@ -47,9 +48,10 @@ export default function RootLayout({
   children: React.ReactNode
 }) {
   return (
-    <html lang="pt-BR">
+    <html lang="pt-BR" className="no-scrollbar">
       <body className={`${inter.className} bg-black text-white`}>
         {children}
+        <BottomNav />
         <Footer />
       </body>
     </html>
