@@ -7,17 +7,21 @@ import { BottomNav } from "@/components/bottom-nav"
 
 const inter = Inter({ subsets: ["latin"] })
 
+const siteUrl = "https://jhermesn.dev"
+
 export const metadata: Metadata = {
+  metadataBase: new URL(siteUrl),
   title: "Easy Expenses",
-  description: "Nunca foi tão fácil controlar suas finanças",
+  description: "Nunca foi tão fácil administrar suas finanças",
   manifest: `/easyExpenses/manifest.json`,
   icons: {
     icon: "/easyExpenses/favicon.ico",
   },
   openGraph: {
     title: "Easy Expenses",
-    description: "Nunca foi tão fácil controlar suas finanças",
+    description: "Nunca foi tão fácil administrar suas finanças",
     type: "website",
+    url: "/easyExpenses/",
     images: [
       {
         url: "/easyExpenses/logo.png",
@@ -30,7 +34,7 @@ export const metadata: Metadata = {
   twitter: {
     card: "summary_large_image",
     title: "Easy Expenses",
-    description: "Nunca foi tão fácil controlar suas finanças",
+    description: "Nunca foi tão fácil administrar suas finanças",
     images: ["/easyExpenses/logo.png"],
   },
 }

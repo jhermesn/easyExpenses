@@ -1,7 +1,7 @@
 {
   "name": "Easy Expenses",
   "short_name": "easyExpenses",
-  "description": "Nunca foi tão fácil controlar suas finanças",
+  "description": "Nunca foi tão fácil administrar suas finanças",
   "start_url": "/easyExpenses/",
   "scope": "/easyExpenses/",
   "display": "standalone",
@@ -10,7 +10,13 @@
   "orientation": "portrait",
   "icons": [
     {
-      "src": "/easyExpenses/logo.png",
+      "src": "/easyExpenses/android-chrome-192x192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/easyExpenses/android-chrome-512x512.png",
       "sizes": "512x512",
       "type": "image/png",
       "purpose": "maskable any"
