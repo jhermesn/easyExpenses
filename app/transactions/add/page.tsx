@@ -26,6 +26,7 @@ interface Category {
 interface Subcategory {
   id: string
   name: string
+  percentage?: number
 }
 
 export default function AddTransactionPage() {
@@ -79,6 +80,11 @@ export default function AddTransactionPage() {
   }
 
   const selectedCategory = categories.find((c) => c.id === formData.categoryId)
+  const subcategoriesTotal = (selectedCategory?.subcategories ?? []).reduce(
+    (sum, s) => sum + (s.percentage || 0),
+    0,
+  )
+  const isRuleSum100 = !!selectedCategory?.hasRules && subcategoriesTotal === 100
 
   // Get available transaction types based on income/expense
   const getAvailableTransactionTypes = () => {
@@ -123,23 +129,9 @@ export default function AddTransactionPage() {
       newErrors.push(t("incomeCannotBeInstallment"))
     }
 
-    // Validação de subcategoria apenas para saídas com regras
-    if (
-      formData.type === "expense" &&
-      selectedCategory?.hasRules &&
-      ((selectedCategory?.subcategories?.length ?? 0) > 0) &&
-      !formData.subcategoryId
-    ) {
+    // Exigir subcategoria apenas quando categoria tem regras e a soma = 100%
+    if (formData.type === "expense" && isRuleSum100 && !formData.subcategoryId) {
       newErrors.push(t("subcategoryRequiredForRuleBasedExpense"))
-    }
-
-    // Para saídas, se categoria tem subcategorias, deve escolher uma
-    if (
-      formData.type === "expense" &&
-      ((selectedCategory?.subcategories?.length ?? 0) > 0) &&
-      !formData.subcategoryId
-    ) {
-      newErrors.push(t("subcategoryRequiredForThisCategory"))
     }
 
     setErrors(newErrors)
@@ -347,7 +339,7 @@ export default function AddTransactionPage() {
               {formData.type === "expense" && (selectedCategory?.subcategories?.length ?? 0) > 0 && (
                 <div className="space-y-3">
                   <Label className="text-gray-300 text-sm font-medium">
-                    {t("subcategory")} {selectedCategory?.hasRules && <span className="text-red-400">*</span>}
+                    {t("subcategory")} {isRuleSum100 && <span className="text-red-400">*</span>}
                   </Label>
                   <Select
                     value={formData.subcategoryId}
@@ -364,7 +356,7 @@ export default function AddTransactionPage() {
                       ))}
                     </SelectContent>
                   </Select>
-                  {selectedCategory?.hasRules && (
+                  {isRuleSum100 && (
                     <p className="text-xs text-gray-400">{t("subcategoryRequiredForRuleBasedExpense")}</p>
                   )}
                 </div>

@@ -1,11 +1,10 @@
 "use client"
 
-import { useMemo, useEffect, useState } from "react"
+import { useEffect, useState } from "react"
 import { usePathname, useRouter } from "next/navigation"
 import { Button } from "@/components/ui/button"
 import { Home, Layers, TrendingUp, Settings } from "lucide-react"
 import { t } from "@/lib/i18n"
-import { DatabaseService } from "@/lib/database"
 
 export function BottomNav() {
   const router = useRouter()
@@ -69,25 +68,7 @@ export function BottomNav() {
   }
 
   useEffect(() => {
-    let cancelled = false
-    const checkOnboarding = async () => {
-      try {
-        const db = DatabaseService.getInstance()
-        await db.init()
-        const categories = await db.getCategories()
-        const transactions = await db.getTransactionsByMonth(year, month)
-        const hasData = (categories?.length || 0) > 0 || (transactions?.length || 0) > 0
-        if (!cancelled) {
-          setHide(!hasData && pathname === "/")
-        }
-      } catch {
-        if (!cancelled) setHide(false)
-      }
-    }
-    checkOnboarding()
-    return () => {
-      cancelled = true
-    }
+    setHide(false)
   }, [pathname, year, month])
 
   if (hide) return null

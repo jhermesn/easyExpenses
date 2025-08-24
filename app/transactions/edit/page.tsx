@@ -123,6 +123,11 @@ export default function EditTransactionStaticPage() {
     () => categories.find((c) => c.id === formData.categoryId),
     [categories, formData.categoryId],
   )
+  const subcategoriesTotal = (selectedCategory?.subcategories ?? []).reduce(
+    (sum, s) => sum + (s.percentage || 0),
+    0,
+  )
+  const isRuleSum100 = !!selectedCategory?.hasRules && subcategoriesTotal === 100
 
   const validateForm = () => {
     const newErrors: string[] = []
@@ -133,12 +138,9 @@ export default function EditTransactionStaticPage() {
 
     if (!formData.title.trim()) newErrors.push(`${t("title")} ${t("required")}`)
 
-    if (
-      formData.type === "expense" &&
-      ((selectedCategory?.subcategories?.length ?? 0) > 0) &&
-      !formData.subcategoryId
-    ) {
-      newErrors.push(t("subcategoryRequiredForThisCategory"))
+    // Exigir subcategoria apenas quando categoria tem regras e a soma = 100%
+    if (formData.type === "expense" && isRuleSum100 && !formData.subcategoryId) {
+      newErrors.push(t("subcategoryRequiredForRuleBasedExpense"))
     }
 
     setErrors(newErrors)
