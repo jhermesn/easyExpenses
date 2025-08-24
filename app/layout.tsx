@@ -12,9 +12,32 @@ export const metadata: Metadata = {
   metadataBase: new URL(siteUrl),
   title: "Easy Expenses",
   description: "Nunca foi tão fácil administrar suas finanças.",
+  applicationName: "Easy Expenses",
+  keywords: [
+    "finanças",
+    "despesas",
+    "controle financeiro",
+    "gastos",
+    "orçamento",
+    "pessoal",
+  ],
+  category: "finance",
+  alternates: {
+    canonical: "/easyExpenses/",
+  },
+  robots: {
+    index: true,
+    follow: true,
+  },
+  appleWebApp: {
+    capable: true,
+    statusBarStyle: "black-translucent",
+    title: "Easy Expenses",
+  },
   manifest: `/easyExpenses/manifest.json`,
   icons: {
     icon: "/easyExpenses/favicon.ico",
+    apple: "/easyExpenses/apple-touch-icon.png",
   },
   openGraph: {
     title: "Easy Expenses",
@@ -39,7 +62,7 @@ export const metadata: Metadata = {
 }
 
 export const viewport: Viewport = {
-  themeColor: "#000000",
+  themeColor: "#1d1f40",
   width: "device-width",
   initialScale: 1,
   maximumScale: 1,
