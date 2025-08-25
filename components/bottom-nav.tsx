@@ -6,16 +6,47 @@ import { useSelectedPeriod } from "@/lib/period-store"
 import { Button } from "@/components/ui/button"
 import { Home, Layers, TrendingUp, Settings } from "lucide-react"
 import { t } from "@/lib/i18n"
+import { useUIStore } from "@/lib/ui-store"
+import { DatabaseService } from "@/lib/database"
 
 export function BottomNav() {
   const router = useRouter()
   const pathname = usePathname()
   const [hide, setHide] = useState(false)
   const { year, month } = useSelectedPeriod()
+  const isOnboarding = useUIStore((s) => s.isOnboarding)
+  const [hasData, setHasData] = useState<boolean>(true)
 
   useEffect(() => {
     setHide(false)
   }, [pathname, year, month])
+
+  useEffect(() => {
+    let isActive = true
+    const checkData = async () => {
+      try {
+        const db = DatabaseService.getInstance()
+        await db.init()
+        const categories = await db.getCategories()
+        if (!isActive) return
+        if (categories.length > 0) {
+          setHasData(true)
+          return
+        }
+        const now = new Date()
+        const transactions = await db.getTransactionsByMonth(now.getFullYear(), now.getMonth() + 1)
+        if (!isActive) return
+        setHasData(transactions.length > 0)
+      } catch {
+        if (!isActive) return
+        setHasData(false)
+      }
+    }
+    checkData()
+    return () => {
+      isActive = false
+    }
+  }, [])
 
   const isActive = (target: string) => {
     if (target === "/" && pathname === "/") return true
@@ -27,7 +58,7 @@ export function BottomNav() {
     setHide(false)
   }, [pathname, year, month])
 
-  if (hide) return null
+  if (hide || isOnboarding || !hasData) return null
 
   return (
     <nav className="sticky bottom-0 bg-black/40 backdrop-blur-xl border-t border-white/10 z-40">

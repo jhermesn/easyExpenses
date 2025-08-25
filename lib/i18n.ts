@@ -54,6 +54,37 @@ export interface Translations {
   categoriesPageSubtitle: string
   transactionsPageSubtitle: string
 
+  // Help / Glossary
+  helpAndGlossary: string
+  helpAndGlossarySubtitle: string
+  glossaryTitle: string
+  termCategoriesTitle: string
+  termCategoriesDesc: string
+  termSubcategoriesTitle: string
+  termSubcategoriesDesc: string
+  termRulesTitle: string
+  termRulesDesc: string
+  termIncomeTitle: string
+  termIncomeDesc: string
+  termExpensesTitle: string
+  termExpensesDesc: string
+  termFixedTitle: string
+  termFixedDesc: string
+  termInstallmentsTitle: string
+  termInstallmentsDesc: string
+  termBalanceTitle: string
+  termBalanceDesc: string
+  termWeeklyFlowTitle: string
+  termWeeklyFlowDesc: string
+  termPDFExportTitle: string
+  termPDFExportDesc: string
+  termPWAOfflineTitle: string
+  termPWAOfflineDesc: string
+  goToCategories: string
+  goToTransactions: string
+  openSettings: string
+  learnTheTerms: string
+
   // Categories
   noCategoriesFound: string
   newCategory: string
@@ -243,6 +274,40 @@ const translations: Record<Locale, Translations> = {
     categoriesPageSubtitle: "Organize suas finanças por categorias",
     transactionsPageSubtitle: "Visualize e analise suas transações",
 
+    // Help / Glossário
+    helpAndGlossary: "Ajuda & Glossário",
+    helpAndGlossarySubtitle: "Entenda os principais termos usados no app",
+    glossaryTitle: "Glossário de Termos",
+    termCategoriesTitle: "Categorias",
+    termCategoriesDesc:
+      "Grupos principais para organizar suas finanças (ex.: Essencial, Lazer, Investimentos).",
+    termSubcategoriesTitle: "Subcategorias",
+    termSubcategoriesDesc:
+      "Detalhes dentro de uma categoria. Podem ter notas e, se houver regras, porcentagens.",
+    termRulesTitle: "Regras de Porcentagem",
+    termRulesDesc:
+      "Distribuem automaticamente seu orçamento/entradas entre subcategorias com base em %.",
+    termIncomeTitle: "Entradas",
+    termIncomeDesc: "Dinheiro que entra (salário, vendas, etc.).",
+    termExpensesTitle: "Saídas",
+    termExpensesDesc: "Dinheiro que sai (contas, compras, etc.).",
+    termFixedTitle: "Transação Fixa",
+    termFixedDesc: "Repete todo mês no mesmo dia (ex.: aluguel, assinatura).",
+    termInstallmentsTitle: "Parcelamento",
+    termInstallmentsDesc: "Divide uma saída em várias parcelas com data inicial.",
+    termBalanceTitle: "Saldo",
+    termBalanceDesc: "Entradas − Saídas do período selecionado.",
+    termWeeklyFlowTitle: "Fluxo Semanal",
+    termWeeklyFlowDesc: "Visão de entradas e saídas por semana do mês.",
+    termPDFExportTitle: "Exportação em PDF",
+    termPDFExportDesc: "Gere um PDF com resumo, gráficos e lista de transações.",
+    termPWAOfflineTitle: "PWA e Offline",
+    termPWAOfflineDesc: "Funciona offline; seus dados ficam guardados localmente no dispositivo.",
+    goToCategories: "Ir para Categorias",
+    goToTransactions: "Ir para Extrato",
+    openSettings: "Abrir Configurações",
+    learnTheTerms: "Aprenda os termos do app",
+
     // Categories
     noCategoriesFound: "Nenhuma categoria encontrada",
     newCategory: "Nova Categoria",
@@ -431,6 +496,40 @@ const translations: Record<Locale, Translations> = {
     categoriesPageSubtitle: "Organize your finances by categories",
     transactionsPageSubtitle: "View and analyze your transactions",
 
+    // Help / Glossary
+    helpAndGlossary: "Help & Glossary",
+    helpAndGlossarySubtitle: "Understand the key terms used in the app",
+    glossaryTitle: "Glossary of Terms",
+    termCategoriesTitle: "Categories",
+    termCategoriesDesc:
+      "Main groups to organize your finances (e.g., Essentials, Leisure, Investments).",
+    termSubcategoriesTitle: "Subcategories",
+    termSubcategoriesDesc:
+      "Details within a category. Can have notes and, if rules exist, percentages.",
+    termRulesTitle: "Percentage Rules",
+    termRulesDesc:
+      "Automatically distribute your budget/income among subcategories based on %.",
+    termIncomeTitle: "Income",
+    termIncomeDesc: "Money coming in (salary, sales, etc.).",
+    termExpensesTitle: "Expenses",
+    termExpensesDesc: "Money going out (bills, purchases, etc.).",
+    termFixedTitle: "Fixed Transaction",
+    termFixedDesc: "Repeats every month on the same day (e.g., rent, subscription).",
+    termInstallmentsTitle: "Installments",
+    termInstallmentsDesc: "Splits an expense into multiple payments with a start date.",
+    termBalanceTitle: "Balance",
+    termBalanceDesc: "Income − Expenses of the selected period.",
+    termWeeklyFlowTitle: "Weekly Flow",
+    termWeeklyFlowDesc: "View of income and expenses by week of the month.",
+    termPDFExportTitle: "PDF Export",
+    termPDFExportDesc: "Generate a PDF with summary, charts, and transactions list.",
+    termPWAOfflineTitle: "PWA and Offline",
+    termPWAOfflineDesc: "Works offline; your data is stored locally on the device.",
+    goToCategories: "Go to Categories",
+    goToTransactions: "Go to Transactions",
+    openSettings: "Open Settings",
+    learnTheTerms: "Learn the app terms",
+
     // Categories
     noCategoriesFound: "No categories found",
     newCategory: "New Category",
@@ -618,6 +717,40 @@ const translations: Record<Locale, Translations> = {
     visualReportsDesc: "Gráficos interactivos y exportación a PDF",
     categoriesPageSubtitle: "Organiza tus finanzas por categorías",
     transactionsPageSubtitle: "Visualiza y analiza tus transacciones",
+
+    // Help / Glossary
+    helpAndGlossary: "Ayuda y Glosario",
+    helpAndGlossarySubtitle: "Entiende los términos clave usados en la app",
+    glossaryTitle: "Glosario de Términos",
+    termCategoriesTitle: "Categorías",
+    termCategoriesDesc:
+      "Grupos principales para organizar tus finanzas (ej.: Esencial, Ocio, Inversiones).",
+    termSubcategoriesTitle: "Subcategorías",
+    termSubcategoriesDesc:
+      "Detalles dentro de una categoría. Pueden tener notas y, si hay reglas, porcentajes.",
+    termRulesTitle: "Reglas de Porcentaje",
+    termRulesDesc:
+      "Distribuyen automáticamente tu presupuesto/ingresos entre subcategorías según %.",
+    termIncomeTitle: "Ingresos",
+    termIncomeDesc: "Dinero que entra (salario, ventas, etc.).",
+    termExpensesTitle: "Gastos",
+    termExpensesDesc: "Dinero que sale (facturas, compras, etc.).",
+    termFixedTitle: "Transacción Fija",
+    termFixedDesc: "Se repite cada mes en el mismo día (ej.: alquiler, suscripción).",
+    termInstallmentsTitle: "Cuotas",
+    termInstallmentsDesc: "Divide un gasto en varios pagos con una fecha de inicio.",
+    termBalanceTitle: "Balance",
+    termBalanceDesc: "Ingresos − Gastos del período seleccionado.",
+    termWeeklyFlowTitle: "Flujo Semanal",
+    termWeeklyFlowDesc: "Vista de ingresos y gastos por semana del mes.",
+    termPDFExportTitle: "Exportación a PDF",
+    termPDFExportDesc: "Genera un PDF con resumen, gráficos y lista de transacciones.",
+    termPWAOfflineTitle: "PWA y Offline",
+    termPWAOfflineDesc: "Funciona sin conexión; tus datos se guardan localmente en el dispositivo.",
+    goToCategories: "Ir a Categorías",
+    goToTransactions: "Ir a Transacciones",
+    openSettings: "Abrir Configuración",
+    learnTheTerms: "Aprende los términos de la app",
 
     // Categories
     noCategoriesFound: "No se encontraron categorías",

@@ -4,6 +4,7 @@ import type { ReactNode } from "react"
 import { useBasePath } from "@/lib/use-basepath"
 import { BottomNav } from "@/components/bottom-nav"
 import { Footer } from "@/components/footer"
+import { useUIStore } from "@/lib/ui-store"
 
 interface AppChromeProps {
   children?: ReactNode
@@ -11,6 +12,7 @@ interface AppChromeProps {
 
 export function AppChrome({ children }: AppChromeProps) {
   const { mounted, inBasePath, isAbsoluteRoot } = useBasePath()
+  const isOnboarding = useUIStore((s) => s.isOnboarding)
 
   if (!mounted) return null
   if (!inBasePath) return null
@@ -19,7 +21,7 @@ export function AppChrome({ children }: AppChromeProps) {
   return (
     <>
       {children}
-      <BottomNav />
+      {!isOnboarding && <BottomNav />}
       <Footer />
     </>
   )

@@ -174,6 +174,18 @@ export default function SettingsPage() {
                   <span className="text-gray-300">{t("version")}:</span>
                   <span className="text-white font-medium">{t("versionCode")}</span>
                 </div>
+                <button
+                  onClick={() => router.push("/help")}
+                  className="w-full text-left p-3 bg-black/20 hover:bg-black/30 backdrop-blur-sm rounded-lg border border-white/5 transition-colors"
+                >
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center space-x-3">
+                      <Info className="w-4 h-4 text-blue-400" />
+                      <span className="text-gray-200">{t("helpAndGlossary")}</span>
+                    </div>
+                    <span className="text-gray-400 text-sm">{t("helpAndGlossarySubtitle")}</span>
+                  </div>
+                </button>
               </div>
               <div className="space-y-4">
                 <div className="flex justify-between items-center p-3 bg-black/20 backdrop-blur-sm rounded-lg border border-white/5">
