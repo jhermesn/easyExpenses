@@ -10,6 +10,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog"
+import { t } from "@/lib/i18n"
 
 type ActionColor = "default" | "yellow" | "red" | "outline"
 
@@ -47,7 +48,7 @@ export function ConfirmDialog({ open, onOpenChange, title, description, actions,
         </AlertDialogHeader>
         <AlertDialogFooter className="flex-col sm:flex-row gap-2">
           <AlertDialogCancel className="w-full sm:w-auto border-white/20 text-gray-300 hover:bg-white/10 hover:text-white">
-            {cancelLabel || "Cancel"}
+            {cancelLabel || t("cancel")}
           </AlertDialogCancel>
           {actions.map((action, idx) => (
             <AlertDialogAction

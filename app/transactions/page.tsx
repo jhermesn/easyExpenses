@@ -272,7 +272,17 @@ export default function TransactionsPage() {
       await exportMonthlyReport(reportData)
     } catch (error) {
       console.error("[ERRO] Erro ao exportar relatório:", error)
-      alert(t("errorExportingReport"))
+      setDialogState({
+        open: true,
+        title: t("error"),
+        description: t("errorExportingReport"),
+        actions: [
+          {
+            label: t("ok"),
+            onClick: () => setDialogState((s) => ({ ...s, open: false })),
+          },
+        ],
+      })
     } finally {
       setIsExporting(false)
     }
@@ -513,16 +523,16 @@ export default function TransactionsPage() {
                               : "bg-red-600/20 text-red-400 border border-red-500/30"
                           }`}
                         >
-                          {transaction.type === "income" ? "Entrada" : "Saída"}
+                          {transaction.type === "income" ? t("incomeShort") : t("expenseShort")}
                         </span>
                         {transaction.transactionType === "fixed" && (
                           <span className="text-xs px-2 py-1 rounded-full bg-blue-600/20 text-blue-400 border border-blue-500/30">
-                            Fixa
+                            {t("fixedShort")}
                           </span>
                         )}
                         {transaction.originalFixedId && (
                           <span className="text-xs px-2 py-1 rounded-full bg-blue-600/20 text-blue-400 border border-blue-500/30">
-                            Fixa
+                            {t("fixedShort")}
                           </span>
                         )}
                         {transaction.installmentInfo && (
@@ -533,14 +543,14 @@ export default function TransactionsPage() {
                       </div>
 
                       <div className="text-sm text-gray-400 space-y-1">
-                        <div>Categoria: {getCategoryName(transaction.categoryId)}</div>
+                        <div>{t("category")}: {getCategoryName(transaction.categoryId)}</div>
                         {transaction.subcategoryId && (
                           <div>
-                            Subcategoria: {getSubcategoryName(transaction.categoryId, transaction.subcategoryId)}
+                            {t("subcategory")}: {getSubcategoryName(transaction.categoryId, transaction.subcategoryId)}
                           </div>
                         )}
-                        <div>Data: {formatDate(new Date(transaction.date))}</div>
-                        {transaction.notes && <div>Obs: {transaction.notes}</div>}
+                        <div>{t("date")}: {formatDate(new Date(transaction.date))}</div>
+                        {transaction.notes && <div>{t("notes")}: {transaction.notes}</div>}
                       </div>
                     </div>
                   </div>

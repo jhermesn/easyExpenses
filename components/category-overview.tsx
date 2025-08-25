@@ -145,7 +145,7 @@ export function CategoryOverview({ categories, transactions }: CategoryOverviewP
               {category.hasRules && totalIncome === 0 && (
                 <div className="pl-4">
                   <div className="text-xs text-yellow-400 bg-yellow-900/20 p-2 rounded">
-                    ⚠️ Adicione entradas para calcular o orçamento das regras
+                    ⚠️ {t("addIncomeToCalculateRules")}
                   </div>
                 </div>
               )}
@@ -153,7 +153,7 @@ export function CategoryOverview({ categories, transactions }: CategoryOverviewP
               {/* Para categorias sem regras, mostrar apenas totais */}
               {!category.hasRules && data.subcategories.length > 0 && (
                 <div className="space-y-2 pl-4">
-                  <div className="text-xs text-gray-400 mb-2">Subcategorias:</div>
+                  <div className="text-xs text-gray-400 mb-2">{t("subcategories")}:</div>
                   {data.subcategories.map((sub) => (
                     <div key={sub.id} className="flex justify-between items-center text-sm bg-black/20 rounded p-2">
                       <span className="text-gray-300">{sub.name}</span>
@@ -166,7 +166,7 @@ export function CategoryOverview({ categories, transactions }: CategoryOverviewP
           )
         })}
 
-        {categories.length === 0 && <div className="text-center text-gray-400 py-8">Nenhuma categoria encontrada</div>}
+        {categories.length === 0 && <div className="text-center text-gray-400 py-8">{t("noCategoriesFound")}</div>}
       </div>
     </div>
   )

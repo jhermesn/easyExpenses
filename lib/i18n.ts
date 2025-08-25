@@ -13,6 +13,13 @@ export interface Translations {
   saving: string
   cancel: string
   delete: string
+  ok: string
+  confirm: string
+  warning: string
+  info: string
+  success: string
+  error: string
+  areYouSure: string
   cannotUndo: string
   edit: string
   add: string
@@ -48,6 +55,7 @@ export interface Translations {
   transactionsPageSubtitle: string
 
   // Categories
+  noCategoriesFound: string
   newCategory: string
   categoryName: string
   categoryType: string
@@ -74,6 +82,9 @@ export interface Translations {
   subcategoryNotesPlaceholder: string
 
   // Transactions
+  incomeShort: string
+  expenseShort: string
+  fixedShort: string
   amount: string
   transaction: string
   title: string
@@ -190,6 +201,13 @@ const translations: Record<Locale, Translations> = {
     saving: "Salvando...",
     cancel: "Cancelar",
     delete: "Excluir",
+    ok: "OK",
+    confirm: "Confirmar",
+    warning: "Aviso",
+    info: "Informação",
+    success: "Sucesso",
+    error: "Erro",
+    areYouSure: "Você tem certeza?",
     cannotUndo: "Esta ação não pode ser desfeita.",
     edit: "Editar",
     add: "Adicionar",
@@ -226,6 +244,7 @@ const translations: Record<Locale, Translations> = {
     transactionsPageSubtitle: "Visualize e analise suas transações",
 
     // Categories
+    noCategoriesFound: "Nenhuma categoria encontrada",
     newCategory: "Nova Categoria",
     categoryName: "Nome da Categoria",
     categoryType: "Tipo",
@@ -252,6 +271,9 @@ const translations: Record<Locale, Translations> = {
     subcategoryNotesPlaceholder: "Observações sobre esta subcategoria...",
 
     // Transactions
+    incomeShort: "Entrada",
+    expenseShort: "Saída",
+    fixedShort: "Fixa",
     amount: "Valor",
     title: "Título",
     transaction: "Transação",
@@ -367,6 +389,13 @@ const translations: Record<Locale, Translations> = {
     saving: "Saving...",
     cancel: "Cancel",
     delete: "Delete",
+    ok: "OK",
+    confirm: "Confirm",
+    warning: "Warning",
+    info: "Info",
+    success: "Success",
+    error: "Error",
+    areYouSure: "Are you sure?",
     cannotUndo: "This action cannot be undone.",
     edit: "Edit",
     add: "Add",
@@ -403,6 +432,7 @@ const translations: Record<Locale, Translations> = {
     transactionsPageSubtitle: "View and analyze your transactions",
 
     // Categories
+    noCategoriesFound: "No categories found",
     newCategory: "New Category",
     categoryName: "Category Name",
     categoryType: "Type",
@@ -429,6 +459,9 @@ const translations: Record<Locale, Translations> = {
     subcategoryNotesPlaceholder: "Notes about this subcategory...",
 
     // Transactions
+    incomeShort: "Income",
+    expenseShort: "Expense",
+    fixedShort: "Fixed",
     amount: "Amount",
     transaction: "Transaction",
     title: "Title",
@@ -544,6 +577,13 @@ const translations: Record<Locale, Translations> = {
     saving: "Guardando...",
     cancel: "Cancelar",
     delete: "Eliminar",
+    ok: "OK",
+    confirm: "Confirmar",
+    warning: "Aviso",
+    info: "Información",
+    success: "Éxito",
+    error: "Error",
+    areYouSure: "¿Estás seguro?",
     cannotUndo: "Esta acción no se puede deshacer.",
     edit: "Editar",
     add: "Agregar",
@@ -580,6 +620,7 @@ const translations: Record<Locale, Translations> = {
     transactionsPageSubtitle: "Visualiza y analiza tus transacciones",
 
     // Categories
+    noCategoriesFound: "No se encontraron categorías",
     newCategory: "Nueva Categoría",
     categoryName: "Nombre de Categoría",
     categoryType: "Tipo",
@@ -606,6 +647,9 @@ const translations: Record<Locale, Translations> = {
     subcategoryNotesPlaceholder: "Notas sobre esta subcategoría...",
 
     // Transactions
+    incomeShort: "Ingreso",
+    expenseShort: "Gasto",
+    fixedShort: "Fija",
     amount: "Cantidad",
     transaction: "Transacción",
     title: "Título",
