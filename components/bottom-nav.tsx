@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react"
 import { usePathname, useRouter } from "next/navigation"
+import { useSelectedPeriod } from "@/lib/period-store"
 import { Button } from "@/components/ui/button"
 import { Home, Layers, TrendingUp, Settings } from "lucide-react"
 import { t } from "@/lib/i18n"
@@ -10,56 +11,11 @@ export function BottomNav() {
   const router = useRouter()
   const pathname = usePathname()
   const [hide, setHide] = useState(false)
-  const [year, setYear] = useState<number>(new Date().getFullYear())
-  const [month, setMonth] = useState<number>(new Date().getMonth() + 1)
-
-  const readYearMonth = () => {
-    let y = NaN
-    let m = NaN
-    try {
-      const sp = new URLSearchParams(window.location.search)
-      const yQ = Number.parseInt(sp.get("year") || "")
-      const mQ = Number.parseInt(sp.get("month") || "")
-      if (Number.isFinite(yQ)) y = yQ
-      if (Number.isFinite(mQ) && mQ >= 1 && mQ <= 12) m = mQ
-    } catch {}
-
-    if (!Number.isFinite(y) || !Number.isFinite(m)) {
-      try {
-        const yLs = Number.parseInt(localStorage.getItem("selectedYear") || "")
-        const mLs = Number.parseInt(localStorage.getItem("selectedMonth") || "")
-        if (!Number.isFinite(y) && Number.isFinite(yLs)) y = yLs
-        if (!Number.isFinite(m) && Number.isFinite(mLs) && mLs >= 1 && mLs <= 12) m = mLs
-      } catch {}
-    }
-
-    if (!Number.isFinite(y) || !Number.isFinite(m)) {
-      const now = new Date()
-      y = now.getFullYear()
-      m = now.getMonth() + 1
-    }
-    return { y, m }
-  }
+  const { year, month } = useSelectedPeriod()
 
   useEffect(() => {
-    const { y, m } = readYearMonth()
-    setYear(y)
-    setMonth(m)
-  }, [pathname])
-
-  useEffect(() => {
-    const onStorage = (e: StorageEvent) => {
-      if (e.key === "selectedYear" || e.key === "selectedMonth") {
-        try {
-          const { y, m } = readYearMonth()
-          setYear(y)
-          setMonth(m)
-        } catch {}
-      }
-    }
-    window.addEventListener("storage", onStorage)
-    return () => window.removeEventListener("storage", onStorage)
-  }, [])
+    setHide(false)
+  }, [pathname, year, month])
 
   const isActive = (target: string) => {
     if (target === "/" && pathname === "/") return true
@@ -79,8 +35,7 @@ export function BottomNav() {
         <div className="grid grid-cols-4 gap-2">
           <Button
             onClick={() => {
-              const { y, m } = readYearMonth()
-              router.push(`/?year=${y}&month=${m}`)
+              router.push(`/`)
             }}
             variant="ghost"
             className={`h-14 md:h-16 bg-black/40 backdrop-blur-xl border ${
@@ -92,7 +47,7 @@ export function BottomNav() {
           </Button>
 
           <Button
-            onClick={() => router.push("/categories")}
+            onClick={() => router.push(`/categories`)}
             variant="ghost"
             className={`h-14 md:h-16 bg-black/40 backdrop-blur-xl border ${
               isActive("/categories") ? "border-purple-500/50" : "border-white/10"
@@ -104,8 +59,7 @@ export function BottomNav() {
 
           <Button
             onClick={() => {
-              const { y, m } = readYearMonth()
-              router.push(`/transactions?year=${y}&month=${m}`)
+              router.push(`/transactions`)
             }}
             variant="ghost"
             className={`h-14 md:h-16 bg-black/40 backdrop-blur-xl border ${
@@ -117,7 +71,7 @@ export function BottomNav() {
           </Button>
 
           <Button
-            onClick={() => router.push("/settings")}
+            onClick={() => router.push(`/settings`)}
             variant="ghost"
             className={`h-14 md:h-16 bg-black/40 backdrop-blur-xl border ${
               isActive("/settings") ? "border-gray-500/50" : "border-white/10"

@@ -4,11 +4,12 @@ import { useEffect, useState } from "react"
 import { AppLoader } from "@/components/app-loader"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
-import { Plus, TrendingUp, TrendingDown, PieChart, Settings, Layers, Sparkles, ArrowRight } from "lucide-react"
-import { usePathname, useRouter } from "next/navigation"
+import { Plus, TrendingUp, TrendingDown, PieChart, Layers, Sparkles, ArrowRight } from "lucide-react"
+import { useRouter } from "next/navigation"
 import { DatabaseService } from "@/lib/database"
 import { formatCurrency } from "@/lib/utils"
 import { MonthNavigator } from "@/components/month-navigator"
+import { useSelectedPeriod } from "@/lib/period-store"
 import { TransactionChart } from "@/components/transaction-chart"
 import { CategoryOverview } from "@/components/category-overview"
 import { t, tStatic } from "@/lib/i18n"
@@ -34,48 +35,22 @@ export default function Dashboard() {
     categories: [],
     transactions: [],
   })
-  const [currentDate, setCurrentDate] = useState(new Date())
+  const { year, month, setFromDate } = useSelectedPeriod()
+  const [currentDate, setCurrentDate] = useState(new Date(year, month - 1, 1))
   const [isLoading, setIsLoading] = useState(true)
   const [hasData, setHasData] = useState(false)
   const router = useRouter()
-  const pathname = usePathname()
 
-  useEffect(() => {
-    // Initialize from query params (year, month)
-    try {
-      const searchParams = new URLSearchParams(window.location.search)
-      const yearParam = searchParams.get("year")
-      const monthParam = searchParams.get("month")
-      if (yearParam && monthParam) {
-        const year = parseInt(yearParam)
-        const month = parseInt(monthParam)
-        if (Number.isFinite(year) && Number.isFinite(month) && month >= 1 && month <= 12) {
-          setCurrentDate(new Date(year, month - 1, 1))
-        }
-      }
-    } catch {}
-  }, [])
+  
 
   useEffect(() => {
     loadDashboardData()
   }, [currentDate])
 
-  // Keep URL in sync with current month so bottom nav reads it
+  // Sync store when month changes via UI
   useEffect(() => {
-    try {
-      const y = currentDate.getFullYear()
-      const m = currentDate.getMonth() + 1
-      try {
-        localStorage.setItem("selectedYear", String(y))
-        localStorage.setItem("selectedMonth", String(m))
-      } catch {}
-      const sp = new URLSearchParams(window.location.search)
-      const currY = Number.parseInt(sp.get("year") || "")
-      const currM = Number.parseInt(sp.get("month") || "")
-      if (currY === y && currM === m) return
-      router.replace(`${pathname}?year=${y}&month=${m}`)
-    } catch {}
-  }, [currentDate, pathname, router])
+    setFromDate(currentDate)
+  }, [currentDate, setFromDate])
 
   const loadDashboardData = async () => {
     try {

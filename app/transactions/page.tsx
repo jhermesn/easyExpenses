@@ -18,10 +18,11 @@ import {
   TrendingDown,
   PieChart,
 } from "lucide-react"
-import { usePathname, useRouter } from "next/navigation"
+import { useRouter } from "next/navigation"
 import { DatabaseService } from "@/lib/database"
 import { formatCurrency, formatDate } from "@/lib/utils"
 import { MonthNavigator } from "@/components/month-navigator"
+import { useSelectedPeriod } from "@/lib/period-store"
 import { ConfirmDialog } from "@/components/confirm-dialog"
 import { CategoryOverview } from "@/components/category-overview"
 import { exportMonthlyReport } from "@/lib/pdf-export"
@@ -62,7 +63,8 @@ export default function TransactionsPage() {
   const [transactions, setTransactions] = useState<Transaction[]>([])
   const [categories, setCategories] = useState<Category[]>([])
   const [filteredTransactions, setFilteredTransactions] = useState<Transaction[]>([])
-  const [currentDate, setCurrentDate] = useState(new Date())
+  const { year, month, setFromDate } = useSelectedPeriod()
+  const [currentDate, setCurrentDate] = useState(new Date(year, month - 1, 1))
   const [filters, setFilters] = useState({
     search: "",
     type: "all",
@@ -71,7 +73,6 @@ export default function TransactionsPage() {
   const [isLoading, setIsLoading] = useState(true)
   const [isExporting, setIsExporting] = useState(false)
   const router = useRouter()
-  const pathname = usePathname()
 
   const [dialogState, setDialogState] = useState<{
     open: boolean
@@ -81,42 +82,13 @@ export default function TransactionsPage() {
   }>({ open: false, title: "", description: "", actions: [] })
 
   useEffect(() => {
-    // Initialize from query params (year, month)
-    try {
-      const searchParams = new URLSearchParams(window.location.search)
-      const yearParam = searchParams.get("year")
-      const monthParam = searchParams.get("month")
-      if (yearParam && monthParam) {
-        const year = parseInt(yearParam)
-        const month = parseInt(monthParam)
-        if (Number.isFinite(year) && Number.isFinite(month) && month >= 1 && month <= 12) {
-          const initial = new Date(year, month - 1, 1)
-          setCurrentDate(initial)
-        }
-      }
-    } catch {}
-  }, [])
-
-  useEffect(() => {
     loadData()
   }, [currentDate])
 
-  // Keep URL query params in sync with selected month
+  // Sync store when month changes via UI
   useEffect(() => {
-    try {
-      const y = currentDate.getFullYear()
-      const m = currentDate.getMonth() + 1
-      try {
-        localStorage.setItem("selectedYear", String(y))
-        localStorage.setItem("selectedMonth", String(m))
-      } catch {}
-      const sp = new URLSearchParams(window.location.search)
-      const currY = Number.parseInt(sp.get("year") || "")
-      const currM = Number.parseInt(sp.get("month") || "")
-      if (currY === y && currM === m) return
-      router.replace(`${pathname}?year=${y}&month=${m}`)
-    } catch {}
-  }, [currentDate, pathname, router])
+    setFromDate(currentDate)
+  }, [currentDate, setFromDate])
 
   useEffect(() => {
     applyFilters()
@@ -327,9 +299,7 @@ export default function TransactionsPage() {
           <div className="flex items-center space-x-4">
             <Button
               variant="ghost"
-              onClick={() =>
-                router.push(`/?year=${currentDate.getFullYear()}&month=${currentDate.getMonth() + 1}`)
-              }
+              onClick={() => router.push(`/`)}
               className="text-green-400 hover:bg-green-600/20 backdrop-blur-sm border border-green-500/20"
             >
               <ArrowLeft className="w-4 h-4" />
