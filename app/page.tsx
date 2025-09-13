@@ -71,6 +71,8 @@ export default function Dashboard() {
 
       if (categories.length === 0 && transactions.length === 0) {
         setIsOnboarding(true)
+      } else {
+        setIsOnboarding(false)
       }
     } catch (error) {
       console.error("[ERRO] Erro ao carregar dados do dashboard:", error)
