@@ -1,33 +1,38 @@
-## Easy Expenses
+# Easy Expenses
 
-PWA open-source para controle de finanças pessoais com foco em simplicidade, privacidade (uso offline) e visualização clara. Organize entradas e saídas por categorias (com regras de porcentagem), acompanhe o fluxo semanal, gere relatórios em PDF e mantenha seus dados localmente no dispositivo.
+😵‍💫 Perdido nas finanças ou sem saber para onde o dinheiro vai? Chega de planilhas complicadas!
 
-### Objetivo do projeto
+Easy Expenses é um app de código aberto que nasceu de uma necessidade pessoal: organizar e acompanhar gastos de forma simples, visual e sem complicação. O objetivo é te ajudar a tomar decisões com mais clareza.
 
-Tornar o controle financeiro acessível e privado, sem depender de nuvem. Ideal para uso pessoal, rápido e sem fricção, funcionando como app instalável (PWA) em celular e desktop.
+![Interface do App](./README/interface.png)
 
-### Principais recursos
+![Modelagem de Dados](./README/model.png)
 
-- Organizar por categorias e subcategorias
-- Regras de porcentagem por subcategoria (50/30/20 etc.)
-- Entradas, saídas, fixas e parceladas
-- Fluxo semanal e gráficos interativos
-- Exportação em PDF do relatório mensal
-- Totalmente offline (dados apenas no seu dispositivo)
-- Multi-idioma (pt-BR, en-US, es-ES)
+### ✨ Por que usar o Easy Expenses?
 
-### Como começar (usuário)
+- ✅ **Simples e rápido:** Registre despesas, receitas e transferências em segundos.
+- 📊 **Visual:** Entenda para onde seu dinheiro está indo com gráficos interativos.
+- 🎯 **Organizado:** Crie categorias e regras (como 50/30/20) para planejar seu orçamento.
+- 🔒 **Privado e Offline:** Seus dados ficam apenas no seu dispositivo. Sem nuvem, sem login.
+- 📄 **Relatórios em PDF:** Exporte um resumo mensal para guardar ou compartilhar.
+- 🌐 **Multi-idioma:** Disponível em português, inglês e espanhol.
 
-1. Abra o app em `https://jhermesn.dev/easyExpenses/` (ou instale como PWA).
-2. Crie suas primeiras categorias.
-3. Adicione suas transações (entradas/saídas). Se quiser, use fixas e parceladas.
-4. Veja os gráficos e exporte o PDF.
+### 🚀 Como começar
 
-Dica: há uma página de Ajuda & Glossário em `https://jhermesn.dev/easyExpenses/help` explicando os termos usados no app.
+1. **Teste agora:** [**jhermesn.dev/easyExpenses**](https://jhermesn.dev/easyExpenses)
+2. **Instale o PWA:** Para uma experiência de app nativo no celular ou desktop.
+3. **Organize e acompanhe:** Crie suas categorias, adicione transações e veja a mágica acontecer!
 
-### Contribuição
+> **Dica:** Há uma página de **Ajuda & Glossário** no app explicando todos os termos.
 
-Contribuições são bem-vindas! Abra uma Issue ou envie uma Pull Request. Sugestões de melhorias, correções de bugs e novas traduções são ótimas maneiras de ajudar.
+### 💬 Contribua e faça parte
+
+Este é um projeto de código aberto e sua ajuda é muito bem-vinda!
+
+- ⭐ **Achou útil?** Deixe uma estrela no repositório.
+- 💡 **Tem uma ideia?** Abra uma [Issue](https://github.com/jhermesn/easyExpenses/issues).
+- 🛠️ **Quer contribuir?** Envie um [Pull Request](https://github.com/jhermesn/easyExpenses/pulls).
+- 🗣️ **Pode ajudar alguém?** Compartilhe com sua rede.
 
 ### Autor
 
