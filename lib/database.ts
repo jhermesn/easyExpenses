@@ -1,3 +1,5 @@
+import { generateId } from "./utils"
+
 interface Category {
   id: string
   name: string
@@ -23,7 +25,7 @@ interface Transaction {
   title: string
   transactionType: "fixed" | "unique" | "installment"
   date: Date
-  dayOfMonth?: number // Para transações fixas
+  dayOfMonth?: number
   installmentInfo?: {
     current: number
     total: number
@@ -31,7 +33,7 @@ interface Transaction {
   }
   notes?: string
   createdAt: Date
-  originalFixedId?: string // Para identificar transações geradas de templates fixos
+  originalFixedId?: string
 }
 
 export class DatabaseService {
@@ -39,7 +41,7 @@ export class DatabaseService {
   private db: IDBDatabase | null = null
   private dbName = "FinancasDB"
   private version = 1
-  private initPromise: Promise<void> | null = null
+  private initPromise: Promise<IDBDatabase> | null = null
 
   private constructor() {}
 
@@ -50,88 +52,85 @@ export class DatabaseService {
     return DatabaseService.instance
   }
 
-  async init(): Promise<void> {
+  private init(): Promise<IDBDatabase> {
     if (this.initPromise) {
       return this.initPromise
     }
 
     this.initPromise = new Promise((resolve, reject) => {
-      if (typeof window === "undefined") {
-        reject(new Error("IndexedDB not available"))
+      if (!("indexedDB" in window)) {
+        reject(new Error("IndexedDB not supported"))
         return
       }
 
       const request = indexedDB.open(this.dbName, this.version)
 
-      request.onerror = () => reject(request.error)
-      request.onsuccess = () => {
-        this.db = request.result
-        resolve()
-      }
-
       request.onupgradeneeded = (event) => {
         const db = (event.target as IDBOpenDBRequest).result
-
-        // Categories store
         if (!db.objectStoreNames.contains("categories")) {
-          const categoryStore = db.createObjectStore("categories", { keyPath: "id" })
+          db.createObjectStore("categories", { keyPath: "id" })
         }
-
-        // Transactions store
         if (!db.objectStoreNames.contains("transactions")) {
-          const transactionStore = db.createObjectStore("transactions", { keyPath: "id" })
-          transactionStore.createIndex("categoryId", "categoryId", { unique: false })
+          const transactionStore = db.createObjectStore("transactions", {
+            keyPath: "id",
+          })
           transactionStore.createIndex("date", "date", { unique: false })
-          transactionStore.createIndex("type", "type", { unique: false })
+          transactionStore.createIndex("categoryId", "categoryId", {
+            unique: false,
+          })
         }
-
-        // Settings store
         if (!db.objectStoreNames.contains("settings")) {
           db.createObjectStore("settings", { keyPath: "key" })
         }
+      }
 
-        // Fixed transaction skips store
-        if (!db.objectStoreNames.contains("fixedSkips")) {
-          db.createObjectStore("fixedSkips", { keyPath: "id" })
-        }
+      request.onsuccess = (event) => {
+        this.db = (event.target as IDBOpenDBRequest).result
+        resolve(this.db)
+      }
+
+      request.onerror = (event) => {
+        console.error(
+          "[ERRO] Erro ao abrir o banco de dados:",
+          (event.target as IDBOpenDBRequest).error,
+        )
+        reject((event.target as IDBOpenDBRequest).error)
       }
     })
 
     return this.initPromise
   }
 
-  private async ensureInitialized(): Promise<void> {
-    if (!this.db) {
-      await this.init()
+  private async getDB(): Promise<IDBDatabase> {
+    if (this.db) {
+      return this.db
     }
+    return this.init()
   }
 
-  // Categories
   async addCategory(category: Omit<Category, "id" | "createdAt">): Promise<string> {
-    await this.ensureInitialized()
-
-    const id = crypto.randomUUID()
+    const db = await this.getDB()
+    const newId = generateId()
     const newCategory: Category = {
       ...category,
-      id,
+      id: newId,
       createdAt: new Date(),
     }
 
     return new Promise((resolve, reject) => {
-      const transaction = this.db!.transaction(["categories"], "readwrite")
+      const transaction = db.transaction("categories", "readwrite")
       const store = transaction.objectStore("categories")
       const request = store.add(newCategory)
 
-      request.onsuccess = () => resolve(id)
+      request.onsuccess = () => resolve(newId)
       request.onerror = () => reject(request.error)
     })
   }
 
   async getCategories(): Promise<Category[]> {
-    await this.ensureInitialized()
-
+    const db = await this.getDB()
     return new Promise((resolve, reject) => {
-      const transaction = this.db!.transaction(["categories"], "readonly")
+      const transaction = db.transaction("categories", "readonly")
       const store = transaction.objectStore("categories")
       const request = store.getAll()
 
@@ -141,10 +140,9 @@ export class DatabaseService {
   }
 
   async updateCategory(category: Category): Promise<void> {
-    await this.ensureInitialized()
-
+    const db = await this.getDB()
     return new Promise((resolve, reject) => {
-      const transaction = this.db!.transaction(["categories"], "readwrite")
+      const transaction = db.transaction("categories", "readwrite")
       const store = transaction.objectStore("categories")
       const request = store.put(category)
 
@@ -154,10 +152,9 @@ export class DatabaseService {
   }
 
   async deleteCategory(id: string): Promise<void> {
-    await this.ensureInitialized()
-
+    const db = await this.getDB()
     return new Promise((resolve, reject) => {
-      const transaction = this.db!.transaction(["categories"], "readwrite")
+      const transaction = db.transaction("categories", "readwrite")
       const store = transaction.objectStore("categories")
       const request = store.delete(id)
 
@@ -166,32 +163,29 @@ export class DatabaseService {
     })
   }
 
-  // Transactions
   async addTransaction(transaction: Omit<Transaction, "id" | "createdAt">): Promise<string> {
-    await this.ensureInitialized()
-
-    const id = crypto.randomUUID()
+    const db = await this.getDB()
+    const newId = generateId()
     const newTransaction: Transaction = {
       ...transaction,
-      id,
+      id: newId,
       createdAt: new Date(),
     }
 
     return new Promise((resolve, reject) => {
-      const dbTransaction = this.db!.transaction(["transactions"], "readwrite")
-      const store = dbTransaction.objectStore("transactions")
+      const tx = db.transaction("transactions", "readwrite")
+      const store = tx.objectStore("transactions")
       const request = store.add(newTransaction)
 
-      request.onsuccess = () => resolve(id)
+      request.onsuccess = () => resolve(newId)
       request.onerror = () => reject(request.error)
     })
   }
 
   async getTransactions(): Promise<Transaction[]> {
-    await this.ensureInitialized()
-
+    const db = await this.getDB()
     return new Promise((resolve, reject) => {
-      const transaction = this.db!.transaction(["transactions"], "readonly")
+      const transaction = db.transaction("transactions", "readonly")
       const store = transaction.objectStore("transactions")
       const request = store.getAll()
 
@@ -200,11 +194,10 @@ export class DatabaseService {
     })
   }
 
-  async getTransaction(id: string): Promise<Transaction | undefined> {
-    await this.ensureInitialized()
-
+  async getTransactionById(id: string): Promise<Transaction | undefined> {
+    const db = await this.getDB()
     return new Promise((resolve, reject) => {
-      const transaction = this.db!.transaction(["transactions"], "readonly")
+      const transaction = db.transaction("transactions", "readonly")
       const store = transaction.objectStore("transactions")
       const request = store.get(id)
 
@@ -214,110 +207,95 @@ export class DatabaseService {
   }
 
   async getTransactionsByMonth(year: number, month: number): Promise<Transaction[]> {
-    await this.ensureInitialized()
-
+    const db = await this.getDB()
     const startDate = new Date(year, month - 1, 1)
     const endDate = new Date(year, month, 0, 23, 59, 59)
 
-    return new Promise(async (resolve, reject) => {
-      try {
-        const transaction = this.db!.transaction(["transactions"], "readonly")
-        const store = transaction.objectStore("transactions")
-        const index = store.index("date")
-        const range = IDBKeyRange.bound(startDate, endDate)
-        const request = index.getAll(range)
-
-        request.onsuccess = async () => {
-          try {
-            // Pegar apenas transações únicas e parceladas
-            const uniqueAndInstallmentTransactions = (request.result || []).filter(
-              (t: Transaction) => t.transactionType === "unique" || t.installmentInfo,
-            )
-
-            // Gerar transações fixas
-            const fixedTransactions = await this.generateFixedTransactions(year, month)
-
-            resolve([...uniqueAndInstallmentTransactions, ...fixedTransactions])
-          } catch (error) {
-            reject(error)
-          }
-        }
-        request.onerror = () => reject(request.error)
-      } catch (error) {
-        reject(error)
-      }
-    })
-  }
-
-  private async generateFixedTransactions(year: number, month: number): Promise<Transaction[]> {
-    try {
-      // Buscar todas as transações fixas
-      const allTransactions = await this.getTransactions()
-      const fixedTemplates = allTransactions.filter((t) => t.transactionType === "fixed")
-
-      // Buscar skips para o mês/ano corrente e montar conjunto de templates a pular
-      const skips = await this.getFixedSkipsForMonth(year, month)
-      const skippedTemplateIds = new Set<string>(skips.map((s) => s.templateId))
-
-      return fixedTemplates
-        .filter((template) => !skippedTemplateIds.has(template.id))
-        .map((template) => {
-        // Calcular o dia correto
-        const lastDayOfMonth = new Date(year, month, 0).getDate()
-        const dayToUse = Math.min(template.dayOfMonth || 1, lastDayOfMonth)
-
-        return {
-          ...template,
-          id: `fixed-${template.id}-${year}-${month}`,
-          date: new Date(year, month - 1, dayToUse),
-          transactionType: "unique" as const,
-          originalFixedId: template.id,
-        }
-      })
-    } catch (error) {
-      console.error("[ERRO] Erro ao gerar transações fixas:", error)
-      return []
-    }
-  }
-
-  // Fixed skips: marca um template para não aparecer em um mês específico
-  async addFixedSkip(templateId: string, year: number, month: number): Promise<void> {
-    await this.ensureInitialized()
-
-    const id = `${templateId}-${year}-${month}`
+    const generatedFixed = await this.generateFixedTransactions(year, month)
 
     return new Promise((resolve, reject) => {
-      const tx = this.db!.transaction(["fixedSkips"], "readwrite")
-      const store = tx.objectStore("fixedSkips")
-      const request = store.put({ id, templateId, year, month })
+      const transaction = db.transaction("transactions", "readonly")
+      const store = transaction.objectStore("transactions")
+      const index = store.index("date")
+      const range = IDBKeyRange.bound(startDate, endDate)
+      const request = index.getAll(range)
 
-      request.onsuccess = () => resolve()
+      request.onsuccess = async () => {
+        try {
+          const uniqueAndInstallmentTransactions = (request.result || []).filter(
+            (t: Transaction) => t.transactionType === "unique" || t.installmentInfo,
+          )
+
+          resolve([...uniqueAndInstallmentTransactions, ...generatedFixed])
+        } catch (error) {
+          reject(error)
+        }
+      }
       request.onerror = () => reject(request.error)
     })
   }
 
-  async getFixedSkipsForMonth(year: number, month: number): Promise<Array<{ id: string; templateId: string; year: number; month: number }>> {
-    await this.ensureInitialized()
+  private async generateFixedTransactions(year: number, month: number): Promise<Transaction[]> {
+    const db = await this.getDB()
+    const fixedTemplates = await this.getFixedTransactionTemplates()
+    const existingTransactions = await this.getRawTransactionsByMonth(year, month)
+
+    const toGenerate: Transaction[] = []
+    const generatedIds = new Set<string>()
+
+    fixedTemplates.forEach((template) => {
+      const dayOfMonth = template.dayOfMonth || 1
+      const date = new Date(year, month - 1, dayOfMonth)
+
+      const fixedId = `fixed-${template.id}-${year}-${month}`
+      const exists = existingTransactions.some((t) => t.id === fixedId)
+
+      if (!exists && !generatedIds.has(fixedId)) {
+        toGenerate.push({
+          ...template,
+          id: fixedId,
+          date,
+          transactionType: "unique" as const,
+          originalFixedId: template.id,
+        })
+        generatedIds.add(fixedId)
+      }
+    })
+
+    toGenerate.sort((a, b) => (a.date > b.date ? 1 : -1))
+
+    const dailyLimit = 3
+    const dailyCounts: { [key: string]: number } = {}
+
+    return toGenerate.filter((tx) => {
+      const txDate = tx.date.toISOString().split("T")[0]
+      dailyCounts[txDate] = (dailyCounts[txDate] || 0) + 1
+      return dailyCounts[txDate] <= dailyLimit
+    })
+  }
+
+  async getRawTransactionsByMonth(year: number, month: number): Promise<Transaction[]> {
+    const db = await this.getDB()
+    const startDate = new Date(year, month - 1, 1)
+    const endDate = new Date(year, month, 0, 23, 59, 59)
 
     return new Promise((resolve, reject) => {
-      const tx = this.db!.transaction(["fixedSkips"], "readonly")
-      const store = tx.objectStore("fixedSkips")
-      const request = store.getAll()
+      const transaction = db.transaction("transactions", "readonly")
+      const store = transaction.objectStore("transactions")
+      const index = store.index("date")
+      const range = IDBKeyRange.bound(startDate, endDate)
+      const request = index.getAll(range)
 
-      request.onsuccess = () => {
-        const result = (request.result || []).filter((s: any) => s.year === year && s.month === month)
-        resolve(result)
-      }
+      request.onsuccess = () => resolve(request.result || [])
       request.onerror = () => reject(request.error)
     })
   }
 
   async updateTransaction(transaction: Transaction): Promise<void> {
-    await this.ensureInitialized()
-
+    const db = await this.getDB()
     return new Promise((resolve, reject) => {
-      const dbTransaction = this.db!.transaction(["transactions"], "readwrite")
-      const store = dbTransaction.objectStore("transactions")
+      const tx = db.transaction("transactions", "readwrite")
+      const store = tx.objectStore("transactions")
       const request = store.put(transaction)
 
       request.onsuccess = () => resolve()
@@ -326,10 +304,9 @@ export class DatabaseService {
   }
 
   async deleteTransaction(id: string): Promise<void> {
-    await this.ensureInitialized()
-
+    const db = await this.getDB()
     return new Promise((resolve, reject) => {
-      const transaction = this.db!.transaction(["transactions"], "readwrite")
+      const transaction = db.transaction("transactions", "readwrite")
       const store = transaction.objectStore("transactions")
       const request = store.delete(id)
 
@@ -338,92 +315,90 @@ export class DatabaseService {
     })
   }
 
-  async deleteInstallmentGroup(groupId: string): Promise<void> {
-    await this.ensureInitialized()
+  async deleteTransactionsByGroup(groupId: string): Promise<void> {
+    const db = await this.getDB()
+    const allTransactions = await this.getTransactions()
+    const groupTransactions = allTransactions.filter((t) => t.installmentInfo?.groupId === groupId)
+
+    const transaction = db.transaction("transactions", "readwrite")
+    const store = transaction.objectStore("transactions")
 
     return new Promise((resolve, reject) => {
-      const transaction = this.db!.transaction(["transactions"], "readwrite")
-      const store = transaction.objectStore("transactions")
-      const request = store.getAll()
+      let deletedCount = 0
+      const totalToDelete = groupTransactions.length
 
-      request.onsuccess = () => {
-        const transactions = request.result || []
-        const installmentTransactions = transactions.filter((t) => t.installmentInfo?.groupId === groupId)
-
-        let deleteCount = 0
-        const totalToDelete = installmentTransactions.length
-
-        if (totalToDelete === 0) {
-          resolve()
-          return
-        }
-
-        installmentTransactions.forEach((t) => {
-          const deleteRequest = store.delete(t.id)
-          deleteRequest.onsuccess = () => {
-            deleteCount++
-            if (deleteCount === totalToDelete) {
-              resolve()
-            }
-          }
-          deleteRequest.onerror = () => reject(deleteRequest.error)
-        })
+      if (totalToDelete === 0) {
+        resolve()
+        return
       }
-      request.onerror = () => reject(request.error)
+
+      groupTransactions.forEach((t) => {
+        const request = store.delete(t.id)
+        request.onsuccess = () => {
+          deletedCount++
+          if (deletedCount === totalToDelete) {
+            resolve()
+          }
+        }
+        request.onerror = () => reject(request.error)
+      })
     })
   }
 
   async renameInstallmentGroup(groupId: string, newBaseTitle: string): Promise<void> {
-    await this.ensureInitialized()
+    const db = await this.getDB()
+    const allTransactions = await this.getTransactions()
+    const groupTransactions = allTransactions.filter((t) => t.installmentInfo?.groupId === groupId)
+
+    const transaction = db.transaction("transactions", "readwrite")
+    const store = transaction.objectStore("transactions")
 
     return new Promise((resolve, reject) => {
-      const transaction = this.db!.transaction(["transactions"], "readwrite")
+      let updatedCount = 0
+      const totalToUpdate = groupTransactions.length
+
+      if (totalToUpdate === 0) {
+        resolve()
+        return
+      }
+
+      groupTransactions.forEach((t) => {
+        if (t.installmentInfo) {
+          const newTitle = `${newBaseTitle} (${t.installmentInfo.current}/${t.installmentInfo.total})`
+          const updatedTransaction = { ...t, title: newTitle }
+          const request = store.put(updatedTransaction)
+
+          request.onsuccess = () => {
+            updatedCount++
+            if (updatedCount === totalToUpdate) {
+              resolve()
+            }
+          }
+          request.onerror = () => reject(request.error)
+        }
+      })
+    })
+  }
+
+  async getFixedTransactionTemplates(): Promise<Transaction[]> {
+    const db = await this.getDB()
+    return new Promise((resolve, reject) => {
+      const transaction = db.transaction("transactions", "readonly")
       const store = transaction.objectStore("transactions")
       const request = store.getAll()
 
       request.onsuccess = () => {
-        const all = (request.result || []) as Transaction[]
-        const affected = all.filter((t) => t.installmentInfo?.groupId === groupId)
-
-        let updated = 0
-        if (affected.length === 0) return resolve()
-
-        affected.forEach((t) => {
-          const newTitle = `${newBaseTitle} (${t.installmentInfo!.current}/${t.installmentInfo!.total})`
-          const updatedTx: Transaction = { ...t, title: newTitle }
-          const putReq = store.put(updatedTx)
-          putReq.onsuccess = () => {
-            updated++
-            if (updated === affected.length) resolve()
-          }
-          putReq.onerror = () => reject(putReq.error)
-        })
+        const result = (request.result || []).filter((t: Transaction) => t.transactionType === "fixed")
+        resolve(result)
       }
       request.onerror = () => reject(request.error)
     })
   }
 
-  async hasFixedTransactionForMonth(templateId: string, year: number, month: number): Promise<boolean> {
-    await this.ensureInitialized()
-
-    const fixedId = `fixed-${templateId}-${year}-${month}`
-
+  async getSetting<T>(key: string): Promise<T | undefined> {
+    const db = await this.getDB()
     return new Promise((resolve, reject) => {
-      const transaction = this.db!.transaction(["transactions"], "readonly")
-      const store = transaction.objectStore("transactions")
-      const request = store.get(fixedId)
-
-      request.onsuccess = () => resolve(!!request.result)
-      request.onerror = () => reject(request.error)
-    })
-  }
-
-  // Settings
-  async getSetting(key: string): Promise<any> {
-    await this.ensureInitialized()
-
-    return new Promise((resolve, reject) => {
-      const transaction = this.db!.transaction(["settings"], "readonly")
+      const transaction = db.transaction("settings", "readonly")
       const store = transaction.objectStore("settings")
       const request = store.get(key)
 
@@ -432,11 +407,10 @@ export class DatabaseService {
     })
   }
 
-  async setSetting(key: string, value: any): Promise<void> {
-    await this.ensureInitialized()
-
+  async setSetting<T>(key: string, value: T): Promise<void> {
+    const db = await this.getDB()
     return new Promise((resolve, reject) => {
-      const transaction = this.db!.transaction(["settings"], "readwrite")
+      const transaction = db.transaction("settings", "readwrite")
       const store = transaction.objectStore("settings")
       const request = store.put({ key, value })
 
@@ -444,9 +418,34 @@ export class DatabaseService {
       request.onerror = () => reject(request.error)
     })
   }
+
+  async clearDatabase(): Promise<void> {
+    const db = await this.getDB()
+    const transaction = db.transaction(["categories", "transactions", "settings"], "readwrite")
+
+    const stores = ["categories", "transactions", "settings"]
+    return new Promise((resolve, reject) => {
+      let completedRequests = 0
+      const totalStores = stores.length
+
+      stores.forEach((storeName) => {
+        const store = transaction.objectStore(storeName)
+        const request = store.clear()
+
+        request.onsuccess = () => {
+          completedRequests++
+          if (completedRequests === totalStores) {
+            resolve()
+          }
+        }
+        request.onerror = () => reject(request.error)
+      })
+
+      transaction.onerror = () => reject(transaction.error)
+    })
+  }
 }
 
-// Inicializa database
 if (typeof window !== "undefined") {
-  DatabaseService.getInstance().init().catch(console.error)
+  DatabaseService.getInstance()
 }

@@ -1,33 +1,34 @@
 "use client"
 
-import { useState, useEffect } from "react"
-import { Button } from "@/components/ui/button"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { Input } from "@/components/ui/input"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import {
-  ArrowLeft,
-  Search,
-  Filter,
-  Edit,
-  Trash2,
-  Plus,
-  Download,
-  FileText,
-  TrendingUp,
-  TrendingDown,
-  PieChart,
-} from "lucide-react"
+import { useEffect, useState } from "react"
 import { useRouter } from "next/navigation"
 import { DatabaseService } from "@/lib/database"
-import { formatCurrency, formatDate } from "@/lib/utils"
-import { MonthNavigator } from "@/components/month-navigator"
 import { useSelectedPeriod } from "@/lib/period-store"
-import { ConfirmDialog } from "@/components/confirm-dialog"
-import { CategoryOverview } from "@/components/category-overview"
-import { exportMonthlyReport } from "@/lib/pdf-export"
-import { getLocale, t, tStatic } from "@/lib/i18n"
 import { AppLoader } from "@/components/app-loader"
+import { Button } from "@/components/ui/button"
+import { Input } from "@/components/ui/input"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import { ConfirmDialog } from "@/components/confirm-dialog"
+import { exportMonthlyReport } from "@/lib/pdf-export"
+import { formatCurrencyI18n as formatCurrency, getLocale, t } from "@/lib/i18n"
+import { formatDate } from "@/lib/utils"
+import { useClientMount } from "@/lib/use-client-mount"
+import {
+  ArrowLeft,
+  Download,
+  FileText,
+  Plus,
+  TrendingDown,
+  TrendingUp,
+  Edit,
+  Trash2,
+  PieChart,
+  Filter,
+  Search,
+} from "lucide-react"
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { MonthNavigator } from "@/components/month-navigator"
+import { CategoryOverview } from "@/components/category-overview"
 
 interface Transaction {
   id: string
@@ -55,11 +56,7 @@ interface Category {
 }
 
 export default function TransactionsPage() {
-  const isClient = typeof window !== "undefined"
-  const [mounted, setMounted] = useState(false)
-  useEffect(() => {
-    setMounted(true)
-  }, [])
+  const mounted = useClientMount()
   const [transactions, setTransactions] = useState<Transaction[]>([])
   const [categories, setCategories] = useState<Category[]>([])
   const [filteredTransactions, setFilteredTransactions] = useState<Transaction[]>([])
@@ -85,7 +82,6 @@ export default function TransactionsPage() {
     loadData()
   }, [currentDate])
 
-  // Sync store when month changes via UI
   useEffect(() => {
     setFromDate(currentDate)
   }, [currentDate, setFromDate])
@@ -98,15 +94,12 @@ export default function TransactionsPage() {
     try {
       setIsLoading(true)
       const db = DatabaseService.getInstance()
-      await db.init()
-
-      const [transactionsData, categoriesData] = await Promise.all([
+      const [loadedTransactions, loadedCategories] = await Promise.all([
         db.getTransactionsByMonth(currentDate.getFullYear(), currentDate.getMonth() + 1),
         db.getCategories(),
       ])
-
-      setTransactions(transactionsData)
-      setCategories(categoriesData)
+      setTransactions(loadedTransactions)
+      setCategories(loadedCategories)
     } catch (error) {
       console.error("[ERRO] Erro ao carregar dados:", error)
       setTransactions([])
@@ -119,7 +112,6 @@ export default function TransactionsPage() {
   const applyFilters = () => {
     let filtered = [...transactions]
 
-    // Search filter
     if (filters.search) {
       filtered = filtered.filter(
         (t) =>
@@ -128,131 +120,114 @@ export default function TransactionsPage() {
       )
     }
 
-    // Type filter
     if (filters.type !== "all") {
       filtered = filtered.filter((t) => t.type === filters.type)
     }
 
-    // Category filter
     if (filters.categoryId !== "all") {
       filtered = filtered.filter((t) => t.categoryId === filters.categoryId)
     }
 
-    // Sort by date (newest first)
     filtered.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
 
     setFilteredTransactions(filtered)
   }
 
-  const getCategoryName = (categoryId: string) => {
-    return categories.find((c) => c.id === categoryId)?.name || t("category")
+  const getCategoryName = (id: string) => {
+    return categories.find((c) => c.id === id)?.name || "N/A"
   }
 
-  const getSubcategoryName = (categoryId: string, subcategoryId?: string) => {
-    if (!subcategoryId) return null
-    const category = categories.find((c) => c.id === categoryId)
-    return category?.subcategories.find((s) => s.id === subcategoryId)?.name
+  const getSubcategoryName = (catId: string, subId?: string) => {
+    if (!subId) return ""
+    const category = categories.find((c) => c.id === catId)
+    return category?.subcategories.find((s) => s.id === subId)?.name || ""
   }
 
-  const handleDeleteTransaction = async (transaction: Transaction) => {
-    const db = DatabaseService.getInstance()
-
+  const handleDeleteTransaction = (transaction: Transaction) => {
     if (transaction.installmentInfo) {
       setDialogState({
         open: true,
-        title: t("installmentDeleteTitle"),
-        description: `${t("installmentDeleteDescription")} (${transaction.installmentInfo.current}/${transaction.installmentInfo.total}).`,
+        title: t("confirmDeleteInstallmentTitle"),
+        description: t("confirmDeleteInstallmentDescription"),
         actions: [
-          {
-            label: t("deleteOnlyThisInstallment"),
-            color: "yellow",
-            onClick: async () => {
-              try {
-                await db.deleteTransaction(transaction.id)
-                await loadData()
-              } finally {
-                setDialogState((s) => ({ ...s, open: false }))
-              }
-            },
-          },
-          {
-            label: t("deleteAllInstallments"),
-            color: "red",
-            onClick: async () => {
-              try {
-                if (transaction.installmentInfo) {
-                  await db.deleteInstallmentGroup(transaction.installmentInfo.groupId)
-                  await loadData()
-                }
-              } finally {
-                setDialogState((s) => ({ ...s, open: false }))
-              }
-            },
-          },
-        ],
-      })
-      return
-    }
-
-    if (transaction.originalFixedId) {
-      setDialogState({
-        open: true,
-        title: t("fixed"),
-        description: t("fixedTransactionDeleteQuestion"),
-        actions: [
-          {
-            label: `${t("delete")} (${t("today")})`,
-            color: "yellow",
-            onClick: async () => {
-              try {
-                const year = currentDate.getFullYear()
-                const month = currentDate.getMonth() + 1
-                await db.addFixedSkip(transaction.originalFixedId!, year, month)
-                await loadData()
-              } finally {
-                setDialogState((s) => ({ ...s, open: false }))
-              }
-            },
-          },
           {
             label: t("delete"),
             color: "red",
             onClick: async () => {
               try {
-                await db.deleteTransaction(transaction.originalFixedId!)
+                const db = DatabaseService.getInstance()
+                await db.deleteTransaction(transaction.id)
                 await loadData()
-              } finally {
-                setDialogState((s) => ({ ...s, open: false }))
+              } catch (error) {
+                console.error("[ERRO] Erro ao deletar transação:", error)
               }
+              setDialogState({ ...dialogState, open: false })
+            },
+          },
+          {
+            label: t("deleteAll"),
+            color: "red",
+            onClick: async () => {
+              try {
+                const db = DatabaseService.getInstance()
+                await db.deleteTransactionsByGroup(transaction.installmentInfo!.groupId)
+                await loadData()
+              } catch (error) {
+                console.error("[ERRO] Erro ao deletar parcelas:", error)
+              }
+              setDialogState({ ...dialogState, open: false })
             },
           },
         ],
       })
-      return
-    }
-
-    setDialogState({
-      open: true,
-      title: t("confirmDeleteTransaction"),
-      description: transaction.title,
-      actions: [
-        {
-          label: t("delete"),
-          color: "red",
-          onClick: async () => {
-            try {
-              await db.deleteTransaction(transaction.id)
-              await loadData()
-            } finally {
-              setDialogState((s) => ({ ...s, open: false }))
-            }
+    } else if (transaction.originalFixedId) {
+      setDialogState({
+        open: true,
+        title: t("confirmDeleteFixedTitle"),
+        description: t("confirmDeleteFixedDescription"),
+        actions: [
+          {
+            label: t("delete"),
+            color: "red",
+            onClick: async () => {
+              try {
+                const db = DatabaseService.getInstance()
+                await db.deleteTransaction(transaction.id)
+                await loadData()
+              } catch (error) {
+                console.error("[ERRO] Erro ao deletar transação:", error)
+              }
+              setDialogState({ ...dialogState, open: false })
+            },
           },
-        },
-      ],
-    })
+        ],
+      })
+    } else {
+      setDialogState({
+        open: true,
+        title: t("confirmDeleteSingleTitle"),
+        description: t("confirmDeleteSingleDescription"),
+        actions: [
+          {
+            label: t("delete"),
+            color: "red",
+            onClick: async () => {
+              try {
+                const db = DatabaseService.getInstance()
+                await db.deleteTransaction(transaction.id)
+                await loadData()
+              } catch (error) {
+                console.error("[ERRO] Erro ao deletar transação:", error)
+              }
+              setDialogState({ ...dialogState, open: false })
+            },
+          },
+        ],
+      })
+    }
   }
 
-  const handleExportPDF = async () => {
+  const handleExport = async () => {
     setIsExporting(true)
     try {
       const totalIncome = transactions.filter((t) => t.type === "income").reduce((sum, t) => sum + t.amount, 0)
@@ -288,15 +263,40 @@ export default function TransactionsPage() {
     }
   }
 
+  const handleExportPDF = async () => {
+    setIsExporting(true)
+    const monthName = new Intl.DateTimeFormat(getLocale(), { month: "long" }).format(currentDate)
+    const totalIncome = filteredTransactions
+      .filter((t) => t.type === "income")
+      .reduce((sum, t) => sum + t.amount, 0)
+    const totalExpenses = filteredTransactions
+      .filter((t) => t.type === "expense")
+      .reduce((sum, t) => sum + t.amount, 0)
+
+    await exportMonthlyReport({
+      month: monthName,
+      year,
+      totalIncome,
+      totalExpenses,
+      balance: totalIncome - totalExpenses,
+      transactions: filteredTransactions,
+      categories,
+    })
+    setIsExporting(false)
+  }
+
   const totalIncome = filteredTransactions.filter((t) => t.type === "income").reduce((sum, t) => sum + t.amount, 0)
   const totalExpenses = filteredTransactions.filter((t) => t.type === "expense").reduce((sum, t) => sum + t.amount, 0)
 
-  if (!isClient || !mounted) return <AppLoader />
+  if (!mounted) return <AppLoader />
 
   if (isLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
-        <div className="text-green-400 text-lg">{tStatic("loading")}</div>
+        <div className="flex items-center space-x-3">
+          <div className="w-8 h-8 border-4 border-green-400 border-t-transparent rounded-full animate-spin"></div>
+          <span className="text-green-400 text-lg">{t("loading")}</span>
+        </div>
       </div>
     )
   }
@@ -429,8 +429,8 @@ export default function TransactionsPage() {
                   </SelectTrigger>
                   <SelectContent className="bg-black/80 backdrop-blur-xl border-white/10">
                     <SelectItem value="all">{t("all")}</SelectItem>
-                    <SelectItem value="income">{t("income")}</SelectItem>
-                    <SelectItem value="expense">{t("expenses")}</SelectItem>
+                    <SelectItem value="income">{t("incomeShort")}</SelectItem>
+                    <SelectItem value="expense">{t("expenseShort")}</SelectItem>
                   </SelectContent>
                 </Select>
               </div>

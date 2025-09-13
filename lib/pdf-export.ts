@@ -93,7 +93,6 @@ function generateMarkdownReport(data: ReportData): string {
 
 `
 
-  // Calculate totals by category
   const categoryTotals = new Map<string, { income: number; expense: number }>()
 
   data.transactions.forEach((transaction) => {
@@ -125,12 +124,10 @@ function generateMarkdownReport(data: ReportData): string {
 
 `
 
-  // Sort transactions by date
   const sortedTransactions = [...data.transactions].sort(
     (a, b) => new Date(b.date).getTime() - new Date(a.date).getTime(),
   )
 
-  // Group transactions by date
   const transactionsByDate = new Map<string, Transaction[]>()
 
   sortedTransactions.forEach((transaction) => {
@@ -180,7 +177,6 @@ function generateMarkdownReport(data: ReportData): string {
 function generateHtmlReport(data: ReportData): string {
   const currentDate = new Date().toLocaleDateString(getLocale())
 
-  // Totais por categoria
   const categoryTotals = new Map<string, { income: number; expense: number }>()
   data.transactions.forEach((transaction) => {
     const category = data.categories.find((c) => c.id === transaction.categoryId)
@@ -195,7 +191,6 @@ function generateHtmlReport(data: ReportData): string {
     }
   })
 
-  // Transações por data (ordenadas desc)
   const sortedTransactions = [...data.transactions].sort(
     (a, b) => new Date(b.date).getTime() - new Date(a.date).getTime(),
   )

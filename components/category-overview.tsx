@@ -30,35 +30,31 @@ interface CategoryOverviewProps {
 }
 
 export function CategoryOverview({ categories, transactions }: CategoryOverviewProps) {
-  // Calcular total de entradas para usar como base do orçamento
   const totalIncome = transactions.filter((t) => t.type === "income").reduce((sum, t) => sum + t.amount, 0)
 
   const getCategoryData = (category: Category) => {
     const categoryTransactions = transactions.filter((t) => t.categoryId === category.id)
 
-    // Separar entradas e saídas
     const incomeTransactions = categoryTransactions.filter((t) => t.type === "income")
     const expenseTransactions = categoryTransactions.filter((t) => t.type === "expense")
 
     const categoryIncome = incomeTransactions.reduce((sum, t) => sum + t.amount, 0)
     const categoryExpense = expenseTransactions.reduce((sum, t) => sum + t.amount, 0)
 
-    // Para categorias com regras, calcular orçamento baseado no total de entradas
     const subcategoryData = category.subcategories.map((sub) => {
       const subExpenseTransactions = expenseTransactions.filter((t) => t.subcategoryId === sub.id)
       const subTotal = subExpenseTransactions.reduce((sum, t) => sum + t.amount, 0)
 
-      // Calcular orçamento baseado no total de entradas
       const budgetAmount = sub.percentage && category.hasRules ? (totalIncome * sub.percentage) / 100 : 0
-      const usedPercentage = budgetAmount > 0 ? (subTotal / budgetAmount) * 100 : 0
-      const isOverBudget = usedPercentage > 100
+      const percentageUsed = budgetAmount > 0 ? (subTotal / budgetAmount) * 100 : 0
+      const isOverBudget = budgetAmount > 0 && subTotal > budgetAmount
 
       return {
         ...sub,
         spent: subTotal,
         budget: budgetAmount,
-        usedPercentage: Math.min(usedPercentage, 100),
-        actualUsedPercentage: usedPercentage,
+        usedPercentage: percentageUsed,
+        actualUsedPercentage: percentageUsed,
         isOverBudget,
       }
     })
@@ -101,7 +97,6 @@ export function CategoryOverview({ categories, transactions }: CategoryOverviewP
                 </div>
               </div>
 
-              {/* Mostrar regras apenas para categorias com saídas e regras ativas */}
               {category.hasRules && totalIncome > 0 && data.subcategories.length > 0 && (
                 <div className="space-y-3 pl-4">
                   <div className="text-xs text-gray-400 mb-2">{t("hasRules")}</div>
@@ -113,7 +108,6 @@ export function CategoryOverview({ categories, transactions }: CategoryOverviewP
                           {sub.isOverBudget && (
                             <div className="flex items-center space-x-1 text-red-400">
                               <AlertTriangle className="w-3 h-3" />
-                              <span className="text-xs">{t("percentageExceeded")}</span>
                             </div>
                           )}
                         </div>
@@ -141,7 +135,6 @@ export function CategoryOverview({ categories, transactions }: CategoryOverviewP
                 </div>
               )}
 
-              {/* Aviso quando não há entradas para calcular orçamento */}
               {category.hasRules && totalIncome === 0 && (
                 <div className="pl-4">
                   <div className="text-xs text-yellow-400 bg-yellow-900/20 p-2 rounded">
@@ -150,7 +143,6 @@ export function CategoryOverview({ categories, transactions }: CategoryOverviewP
                 </div>
               )}
 
-              {/* Para categorias sem regras, mostrar apenas totais */}
               {!category.hasRules && data.subcategories.length > 0 && (
                 <div className="space-y-2 pl-4">
                   <div className="text-xs text-gray-400 mb-2">{t("subcategories")}:</div>

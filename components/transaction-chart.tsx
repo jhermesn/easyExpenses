@@ -42,9 +42,8 @@ export function TransactionChart({ transactions }: TransactionChartProps) {
       value: totalExpenses,
       color: "#ef4444",
     },
-  ].filter((item) => item.value > 0) // Only show items with value > 0
-
-  // Dados para gráfico de barras por semana
+  ].filter((item) => item.value > 0)
+  
   const weeklyData = getWeeklyData(transactions)
 
   const CustomTooltip = ({ active, payload }: any) => {

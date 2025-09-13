@@ -100,7 +100,6 @@ export function CategoryForm({ category, onSave, onCancel }: CategoryFormProps) 
       newErrors.push(t("rulesNeedAtLeastOneSubcategory"))
     }
 
-    // Validação: se tem regras, todas as subcategorias devem ter porcentagem
     if (formData.hasRules && formData.subcategories.some((sub) => !sub.percentage || sub.percentage <= 0)) {
       newErrors.push(t("subcategoriesMustHavePercentageGreaterThanZero"))
     }

@@ -1,23 +1,18 @@
 "use client"
 
-import { useEffect, useState } from "react"
-import { useRouter } from "next/navigation"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { Button } from "@/components/ui/button"
-import { t } from "@/lib/i18n"
 import { ArrowLeft, BookOpen, Info, TrendingDown, TrendingUp } from "lucide-react"
+import { Button } from "@/components/ui/button"
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { AppLoader } from "@/components/app-loader"
+import { t } from "@/lib/i18n"
+import { useClientMount } from "@/lib/use-client-mount"
+import { useRouter } from "next/navigation"
 
 export default function HelpPage() {
-  const isClient = typeof window !== "undefined"
-  const [mounted, setMounted] = useState(false)
+  const mounted = useClientMount()
   const router = useRouter()
 
-  useEffect(() => {
-    setMounted(true)
-  }, [])
-
-  if (!isClient || !mounted) return <AppLoader />
+  if (!mounted) return <AppLoader />
 
   return (
     <div className="min-h-screen text-white p-4">

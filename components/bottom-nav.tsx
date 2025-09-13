@@ -26,7 +26,7 @@ export function BottomNav() {
     const checkData = async () => {
       try {
         const db = DatabaseService.getInstance()
-        await db.init()
+
         const categories = await db.getCategories()
         if (!isActive) return
         if (categories.length > 0) {
@@ -53,10 +53,6 @@ export function BottomNav() {
     if (target !== "/" && pathname.startsWith(target)) return true
     return false
   }
-
-  useEffect(() => {
-    setHide(false)
-  }, [pathname, year, month])
 
   if (hide || isOnboarding || !hasData) return null
 

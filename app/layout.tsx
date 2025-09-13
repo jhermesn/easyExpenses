@@ -3,6 +3,8 @@ import type { Metadata, Viewport } from "next"
 import { Inter } from "next/font/google"
 import "../styles/globals.css"
 import { AppChrome } from "@/components/app-chrome"
+import { LocaleInitializer } from "@/components/locale-initializer"
+import { CurrencyInitializer } from "@/components/currency-initializer"
 
 const inter = Inter({ subsets: ["latin"] })
 
@@ -75,7 +77,12 @@ export default function RootLayout({
 }) {
   return (
     <html lang="pt-BR" className="no-scrollbar">
+      <head>
+        <meta name="mobile-web-app-capable" content="yes" />
+      </head>
       <body className={`${inter.className} bg-black text-white`}>
+        <LocaleInitializer />
+        <CurrencyInitializer />
         {children}
         <AppChrome />
       </body>

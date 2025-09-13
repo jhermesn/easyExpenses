@@ -3,6 +3,9 @@
 @tailwind utilities;
 
 @layer base {
+  html {
+    background-color: var(--background);
+  }
   :root {
     --background: oklch(1 0 0);
     --foreground: oklch(0.145 0 0);
@@ -89,7 +92,6 @@
     background-attachment: fixed;
   }
 
-  /* Remove default click outlines while keeping keyboard-accessible focus */
   :focus {
     outline: none;
   }
@@ -100,7 +102,6 @@
 }
 
 @layer components {
-  /* Custom scrollbar */
   ::-webkit-scrollbar {
     width: 8px;
   }
@@ -121,15 +122,14 @@
 
 @layer utilities {
   .no-scrollbar {
-    -ms-overflow-style: none; /* IE and Edge */
-    scrollbar-width: none; /* Firefox */
+    -ms-overflow-style: none;
+    scrollbar-width: none;
   }
 
   .no-scrollbar::-webkit-scrollbar {
-    display: none; /* Chrome, Safari and Opera */
+    display: none;
   }
 
-  /* PWA */
   @media (display-mode: standalone) {
     body {
       user-select: none;

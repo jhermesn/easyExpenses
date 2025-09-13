@@ -1,20 +1,19 @@
 "use client"
 
-import type React from "react"
-
-import { useState, useEffect } from "react"
-import { Button } from "@/components/ui/button"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
-import { Textarea } from "@/components/ui/textarea"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { ArrowLeft, DollarSign } from "lucide-react"
+import { useEffect, useState } from "react"
 import { useRouter } from "next/navigation"
 import { DatabaseService } from "@/lib/database"
-import { formatCurrency } from "@/lib/utils"
-import { t, tStatic } from "@/lib/i18n"
 import { AppLoader } from "@/components/app-loader"
+import { Button } from "@/components/ui/button"
+import { Input } from "@/components/ui/input"
+import { Label } from "@/components/ui/label"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import { Textarea } from "@/components/ui/textarea"
+import { t } from "@/lib/i18n"
+import { useClientMount } from "@/lib/use-client-mount"
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { formatCurrency } from "@/lib/utils"
 
 interface Category {
   id: string
@@ -30,11 +29,7 @@ interface Subcategory {
 }
 
 export default function AddTransactionPage() {
-  const isClient = typeof window !== "undefined"
-  const [mounted, setMounted] = useState(false)
-  useEffect(() => {
-    setMounted(true)
-  }, [])
+  const mounted = useClientMount()
   const [categories, setCategories] = useState<Category[]>([])
   const [formData, setFormData] = useState({
     type: "expense" as "income" | "expense",
@@ -57,9 +52,8 @@ export default function AddTransactionPage() {
     loadCategories()
   }, [])
 
-  // Reset transaction type when changing to income
   useEffect(() => {
-    if (formData.type === "income" && formData.transactionType === "installment") {
+    if (formData.type === "income") {
       setFormData((prev) => ({ ...prev, transactionType: "unique" }))
     }
   }, [formData.type])
@@ -68,7 +62,6 @@ export default function AddTransactionPage() {
     try {
       setIsLoading(true)
       const db = DatabaseService.getInstance()
-      await db.init()
       const data = await db.getCategories()
       setCategories(data)
     } catch (error) {
@@ -86,20 +79,18 @@ export default function AddTransactionPage() {
   )
   const isRuleSum100 = !!selectedCategory?.hasRules && subcategoriesTotal === 100
 
-  // Get available transaction types based on income/expense
   const getAvailableTransactionTypes = () => {
     if (formData.type === "income") {
       return [
-        { value: "unique", label: t("unique") },
-        { value: "fixed", label: t("fixed") },
-      ]
-    } else {
-      return [
-        { value: "unique", label: t("unique") },
-        { value: "fixed", label: t("fixed") },
-        { value: "installment", label: t("installment") },
+        { value: "unique" as const, label: t("unique") },
+        { value: "fixed" as const, label: t("fixed") },
       ]
     }
+    return [
+      { value: "unique" as const, label: t("unique") },
+      { value: "installment" as const, label: t("installment") },
+      { value: "fixed" as const, label: t("fixed") },
+    ]
   }
 
   const validateForm = () => {
@@ -124,12 +115,10 @@ export default function AddTransactionPage() {
       }
     }
 
-    // Entradas não podem ser parceladas
     if (formData.type === "income" && formData.transactionType === "installment") {
       newErrors.push(t("incomeCannotBeInstallment"))
     }
 
-    // Exigir subcategoria apenas quando categoria tem regras e a soma = 100%
     if (formData.type === "expense" && isRuleSum100 && !formData.subcategoryId) {
       newErrors.push(t("subcategoryRequiredForRuleBasedExpense"))
     }
@@ -151,7 +140,6 @@ export default function AddTransactionPage() {
       const installments = Number.parseInt(formData.installments)
 
       if (formData.transactionType === "installment") {
-        // Criar múltiplas transações para parcelamento (apenas para saídas)
         const groupId = crypto.randomUUID()
         const baseDate = new Date(formData.date)
 
@@ -178,7 +166,7 @@ export default function AddTransactionPage() {
       } else {
         await db.addTransaction({
           categoryId: formData.categoryId,
-          subcategoryId: formData.type === "expense" ? formData.subcategoryId || undefined : undefined, // Subcategoria apenas para saídas
+          subcategoryId: formData.type === "expense" ? formData.subcategoryId || undefined : undefined,
           type: formData.type,
           amount,
           title: formData.title,
@@ -198,12 +186,15 @@ export default function AddTransactionPage() {
     }
   }
 
-  if (!isClient || !mounted) return <AppLoader />
+  if (!mounted) return <AppLoader />
 
   if (isLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
-        <div className="text-green-400 text-lg">{tStatic("loading")}</div>
+        <div className="flex items-center space-x-3">
+          <div className="w-8 h-8 border-4 border-green-400 border-t-transparent rounded-full animate-spin"></div>
+          <span className="text-green-400 text-lg">{t("loading")}</span>
+        </div>
       </div>
     )
   }
@@ -307,8 +298,8 @@ export default function AddTransactionPage() {
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent className="bg-black/80 backdrop-blur-xl border-white/10">
-                      <SelectItem value="income">{t("income")}</SelectItem>
-                      <SelectItem value="expense">{t("expenses")}</SelectItem>
+                      <SelectItem value="income">{t("incomeShort")}</SelectItem>
+                      <SelectItem value="expense">{t("expenseShort")}</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>

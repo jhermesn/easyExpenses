@@ -1,14 +1,15 @@
 "use client"
 
-import { useState, useEffect } from "react"
-import { Button } from "@/components/ui/button"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { Plus, Edit, Trash2, ArrowLeft } from "lucide-react"
+import { ArrowLeft, Edit, Plus, Trash2 } from "lucide-react"
+import { useEffect, useState } from "react"
 import { useRouter } from "next/navigation"
 import { DatabaseService } from "@/lib/database"
 import { CategoryForm } from "@/components/category-form"
-import { t, tStatic } from "@/lib/i18n"
 import { AppLoader } from "@/components/app-loader"
+import { Button } from "@/components/ui/button"
+import { t, tStatic } from "@/lib/i18n"
+import { useClientMount } from "@/lib/use-client-mount"
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 
 interface Category {
   id: string
@@ -26,11 +27,7 @@ interface Subcategory {
 }
 
 export default function CategoriesPage() {
-  const isClient = typeof window !== "undefined"
-  const [mounted, setMounted] = useState(false)
-  useEffect(() => {
-    setMounted(true)
-  }, [])
+  const mounted = useClientMount()
   const [categories, setCategories] = useState<Category[]>([])
   const [showForm, setShowForm] = useState(false)
   const [editingCategory, setEditingCategory] = useState<Category | null>(null)
@@ -45,7 +42,6 @@ export default function CategoriesPage() {
     try {
       setIsLoading(true)
       const db = DatabaseService.getInstance()
-      await db.init()
       const data = await db.getCategories()
       setCategories(data)
     } catch (error) {
@@ -81,7 +77,7 @@ export default function CategoriesPage() {
         await db.deleteCategory(id)
         await loadCategories()
       } catch (error) {
-        console.error("[ERRO] Erro ao excluir categoria:", error)
+        console.error("[ERRO] Erro ao deletar categoria:", error)
       }
     }
   }
@@ -91,7 +87,7 @@ export default function CategoriesPage() {
     setShowForm(true)
   }
 
-  if (!isClient || !mounted) {
+  if (!mounted) {
     return <AppLoader />
   }
 

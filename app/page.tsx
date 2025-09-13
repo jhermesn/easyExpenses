@@ -1,20 +1,21 @@
 "use client"
 
 import { useEffect, useState } from "react"
+import { useRouter } from "next/navigation"
+import { DatabaseService } from "@/lib/database"
+import { useUIStore } from "@/lib/ui-store"
+import { useSelectedPeriod } from "@/lib/period-store"
 import { AppLoader } from "@/components/app-loader"
+import { Onboarding } from "@/components/onboarding"
+import { useClientMount } from "@/lib/use-client-mount"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Plus, TrendingUp, TrendingDown, PieChart, HelpCircle } from "lucide-react"
-import { useRouter } from "next/navigation"
-import { DatabaseService } from "@/lib/database"
 import { formatCurrency } from "@/lib/utils"
 import { MonthNavigator } from "@/components/month-navigator"
-import { useSelectedPeriod } from "@/lib/period-store"
 import { TransactionChart } from "@/components/transaction-chart"
 import { CategoryOverview } from "@/components/category-overview"
 import { t, tStatic } from "@/lib/i18n"
-import { useUIStore } from "@/lib/ui-store"
-import { Onboarding } from "@/components/onboarding"
 
 interface DashboardData {
   totalIncome: number
@@ -25,11 +26,7 @@ interface DashboardData {
 }
 
 export default function Dashboard() {
-  const isClient = typeof window !== "undefined"
-  const [mounted, setMounted] = useState(false)
-  useEffect(() => {
-    setMounted(true)
-  }, [])
+  const mounted = useClientMount()
   const setIsOnboarding = useUIStore((s) => s.setIsOnboarding)
   const [data, setData] = useState<DashboardData>({
     totalIncome: 0,
@@ -48,7 +45,6 @@ export default function Dashboard() {
     loadDashboardData()
   }, [currentDate])
 
-  // Sync store when month changes via UI
   useEffect(() => {
     setFromDate(currentDate)
   }, [currentDate, setFromDate])
@@ -58,51 +54,40 @@ export default function Dashboard() {
       setIsLoading(true)
       const db = DatabaseService.getInstance()
 
-      // Ensure database is initialized
-      await db.init()
-
       const categories = await db.getCategories()
       const transactions = await db.getTransactionsByMonth(currentDate.getFullYear(), currentDate.getMonth() + 1)
 
       const totalIncome = transactions.filter((t) => t.type === "income").reduce((sum, t) => sum + t.amount, 0)
       const totalExpenses = transactions.filter((t) => t.type === "expense").reduce((sum, t) => sum + t.amount, 0)
+      const balance = totalIncome - totalExpenses
 
       setData({
         totalIncome,
         totalExpenses,
-        balance: totalIncome - totalExpenses,
+        balance,
         categories,
         transactions,
       })
 
-      const hasAnyData = categories.length > 0 || transactions.length > 0
-      setIsOnboarding(!hasAnyData)
+      if (categories.length === 0 && transactions.length === 0) {
+        setIsOnboarding(true)
+      }
     } catch (error) {
-      console.error("[ERRO] Erro ao carregar dados:", error)
-      // Set empty data on error
-      setData({
-        totalIncome: 0,
-        totalExpenses: 0,
-        balance: 0,
-        categories: [],
-        transactions: [],
-      })
+      console.error("[ERRO] Erro ao carregar dados do dashboard:", error)
       setIsOnboarding(true)
     } finally {
       setIsLoading(false)
     }
   }
 
-  if (!isClient || !mounted) return <AppLoader />
+  if (!mounted) return <AppLoader />
 
   if (isLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <div className="flex items-center space-x-3">
           <div className="w-8 h-8 border-4 border-green-400 border-t-transparent rounded-full animate-spin"></div>
-          <span className="text-green-400 text-lg">
-            {tStatic("loading")}
-          </span>
+          <span className="text-green-400 text-lg">{t("loading")}</span>
         </div>
       </div>
     )
@@ -121,7 +106,6 @@ export default function Dashboard() {
             <img
               src="/easyExpenses/icon.png"
               onError={(e) => {
-                // fallback to logo if icon is not available
                 (e.currentTarget as HTMLImageElement).src = "/easyExpenses/logo.png"
               }}
               alt="Easy Expenses Icon"

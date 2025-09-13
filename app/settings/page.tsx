@@ -1,58 +1,30 @@
 "use client"
 
 import { useEffect, useState } from "react"
-import { Button } from "@/components/ui/button"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { ArrowLeft, Globe, DollarSign, Info, ExternalLink } from "lucide-react"
 import { useRouter } from "next/navigation"
-import { setLocale, getLocale, type Locale, t } from "@/lib/i18n"
 import { DatabaseService } from "@/lib/database"
 import { AppLoader } from "@/components/app-loader"
+import { Button } from "@/components/ui/button"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import { useI18n, setLocale, Locale } from "@/lib/i18n"
+import { useClientMount } from "@/lib/use-client-mount"
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { ArrowLeft, DollarSign, ExternalLink, Globe, Info } from "lucide-react"
+import { useCurrencyStore, type CurrencyCode } from "@/lib/currency-store"
 
 export default function SettingsPage() {
-  const isClient = typeof window !== "undefined"
-  const [mounted, setMounted] = useState(false)
-  useEffect(() => {
-    setMounted(true)
-  }, [])
-  const [currentLocale, setCurrentLocale] = useState<Locale>(getLocale())
-  const [currentCurrency, setCurrentCurrency] = useState<string>(
-    (typeof window !== "undefined" && localStorage.getItem("currencyCode")) || "BRL",
-  )
+  const mounted = useClientMount()
+  const { t, locale } = useI18n()
+  const { currency, setCurrency } = useCurrencyStore()
   const [isLoading, setIsLoading] = useState(false)
   const router = useRouter()
 
-  const handleLocaleChange = async (locale: Locale) => {
-    setIsLoading(true)
-    setLocale(locale)
-    setCurrentLocale(locale)
-
-    // Save to database
-    try {
-      const db = DatabaseService.getInstance()
-      await db.setSetting("locale", locale)
-    } catch (error) {
-      console.error("[ERRO] Erro ao salvar locale:", error)
-    }
-
-    setIsLoading(false)
-    // Force page refresh to update all translations
-    window.location.reload()
+  const handleLocaleChange = (newLocale: Locale) => {
+    setLocale(newLocale)
   }
 
-  const handleCurrencyChange = async (currencyCode: string) => {
-    setIsLoading(true)
-    try {
-      localStorage.setItem("currencyCode", currencyCode)
-      const db = DatabaseService.getInstance()
-      await db.setSetting("currencyCode", currencyCode)
-      setCurrentCurrency(currencyCode)
-    } catch (error) {
-      console.error("[ERRO] Erro ao salvar moeda:", error)
-    } finally {
-      setIsLoading(false)
-    }
+  const handleCurrencyChange = (currencyCode: CurrencyCode) => {
+    setCurrency(currencyCode)
   }
 
   const languages = [
@@ -67,7 +39,7 @@ export default function SettingsPage() {
     { code: "EUR", name: "Euro (€)" },
   ]
 
-  if (!isClient || !mounted) return <AppLoader />
+  if (!mounted) return <AppLoader />
 
   return (
     <div className="min-h-screen text-white p-4">
@@ -106,7 +78,7 @@ export default function SettingsPage() {
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div className="space-y-3">
                 <label className="text-sm text-gray-300 font-medium">{t("language")}</label>
-                <Select value={currentLocale} onValueChange={handleLocaleChange} disabled={isLoading}>
+                <Select value={locale} onValueChange={handleLocaleChange} disabled={isLoading}>
                   <SelectTrigger className="bg-black/40 backdrop-blur-sm border-white/10 text-white hover:border-blue-500/50 transition-all duration-300">
                     <SelectValue />
                   </SelectTrigger>
@@ -125,7 +97,7 @@ export default function SettingsPage() {
 
               <div className="space-y-3">
                 <label className="text-sm text-gray-300 font-medium">{t("currency")}</label>
-                <Select value={currentCurrency} onValueChange={handleCurrencyChange} disabled={isLoading}>
+                <Select value={currency} onValueChange={handleCurrencyChange} disabled={isLoading}>
                   <SelectTrigger className="bg-black/40 backdrop-blur-sm border-white/10 text-white hover:border-blue-500/50 transition-all duration-300">
                     <SelectValue />
                   </SelectTrigger>

@@ -5,7 +5,7 @@ import { persist } from "zustand/middleware"
 
 interface SelectedPeriodState {
   year: number
-  month: number // 1-12
+  month: number
   setPeriod: (year: number, month: number) => void
   setFromDate: (date: Date) => void
 }

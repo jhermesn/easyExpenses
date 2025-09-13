@@ -2,12 +2,51 @@
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
-import { Layers, Sparkles, PieChart, TrendingUp, ArrowRight } from "lucide-react"
-import { t } from "@/lib/i18n"
+import {
+  Layers,
+  Sparkles,
+  PieChart,
+  TrendingUp,
+  ArrowRight,
+  Globe,
+  DollarSign,
+} from "lucide-react"
+import { useI18n, setLocale, Locale } from "@/lib/i18n"
 import { useRouter } from "next/navigation"
+import { useCurrencyStore, type CurrencyCode } from "@/lib/currency-store"
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select"
 
 export function Onboarding() {
   const router = useRouter()
+  const { t, locale } = useI18n()
+  const { currency, setCurrency } = useCurrencyStore()
+
+  const handleLocaleChange = (newLocale: Locale) => {
+    setLocale(newLocale)
+  }
+
+  const handleCurrencyChange = (currencyCode: CurrencyCode) => {
+    setCurrency(currencyCode)
+  }
+
+  const languages = [
+    { code: "pt-BR" as Locale, name: "Português (Brasil)", flag: "🇧🇷" },
+    { code: "en-US" as Locale, name: "English (US)", flag: "🇺🇸" },
+    { code: "es-ES" as Locale, name: "Español (España)", flag: "🇪🇸" },
+  ]
+
+  const currencies = [
+    { code: "BRL", name: "Real Brasileiro (R$)" },
+    { code: "USD", name: "US Dollar ($)" },
+    { code: "EUR", name: "Euro (€)" },
+  ]
+
   return (
     <div className="min-h-screen flex items-center justify-center p-4">
       <div className="max-w-4xl mx-auto">
@@ -41,8 +80,64 @@ export function Onboarding() {
           </CardHeader>
 
           <CardContent className="relative space-y-8 pb-12">
+            {/* Language & Currency */}
+            <div className="px-6">
+              <div className="bg-black/20 backdrop-blur-sm p-6 rounded-xl border border-white/5">
+                <h3 className="text-white font-semibold mb-4 flex items-center space-x-2">
+                  <Globe className="w-5 h-5 text-blue-400" />
+                  <span>{t("languageAndCurrency")}</span>
+                </h3>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <div className="space-y-3">
+                    <label className="text-sm text-gray-300 font-medium">
+                      {t("language")}
+                    </label>
+                    <Select value={locale} onValueChange={handleLocaleChange}>
+                      <SelectTrigger className="bg-black/40 backdrop-blur-sm border-white/10 text-white hover:border-blue-500/50 transition-all duration-300">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent className="bg-black/80 backdrop-blur-xl border-white/10">
+                        {languages.map((lang) => (
+                          <SelectItem key={lang.code} value={lang.code}>
+                            <div className="flex items-center space-x-3">
+                              <span className="text-lg">{lang.flag}</span>
+                              <span>{lang.name}</span>
+                            </div>
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+
+                  <div className="space-y-3">
+                    <label className="text-sm text-gray-300 font-medium">
+                      {t("currency")}
+                    </label>
+                    <Select
+                      value={currency}
+                      onValueChange={handleCurrencyChange}
+                    >
+                      <SelectTrigger className="bg-black/40 backdrop-blur-sm border-white/10 text-white hover:border-blue-500/50 transition-all duration-300">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent className="bg-black/80 backdrop-blur-xl border-white/10">
+                        {currencies.map((c) => (
+                          <SelectItem key={c.code} value={c.code}>
+                            <div className="flex items-center space-x-3">
+                              <DollarSign className="w-4 h-4" />
+                              <span>{c.name}</span>
+                            </div>
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                </div>
+              </div>
+            </div>
+
             {/* Features Grid */}
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8 px-6">
               <div className="bg-black/20 backdrop-blur-sm p-6 rounded-xl border border-white/5 hover:border-green-500/30 transition-all duration-300 group">
                 <div className="w-12 h-12 bg-green-600/20 rounded-lg flex items-center justify-center mb-4 group-hover:scale-110 transition-transform duration-300">
                   <Layers className="w-6 h-6 text-green-400" />
@@ -69,7 +164,7 @@ export function Onboarding() {
             </div>
 
             {/* Action */}
-            <div className="space-y-4">
+            <div className="space-y-4 px-6">
               <Button
                 onClick={() => router.push("/categories")}
                 className="w-full bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-500 hover:to-emerald-500 backdrop-blur-sm border border-green-500/30 shadow-2xl text-white font-semibold py-4 text-lg group transition-all duration-300"
@@ -83,7 +178,7 @@ export function Onboarding() {
             </div>
 
             {/* Quick Tips */}
-            <div className="bg-gradient-to-r from-blue-900/20 to-purple-900/20 backdrop-blur-sm border border-white/10 rounded-xl p-6 mt-8">
+            <div className="bg-gradient-to-r from-blue-900/20 to-purple-900/20 backdrop-blur-sm border border-white/10 rounded-xl p-6 mt-8 mx-6">
               <h4 className="text-white font-semibold mb-3 flex items-center space-x-2">
                 <Sparkles className="w-4 h-4 text-blue-400" />
                 <span>{t("quickTip")}</span>
@@ -92,8 +187,10 @@ export function Onboarding() {
             </div>
 
             {/* PWA Info */}
-            <div className="text-center pt-6 border-t border-white/10">
-              <p className="text-gray-400 text-sm">💡 {t("pwaInfo")}</p>
+            <div className="text-center pt-6 border-t border-white/10 mx-6">
+              <p className="text-gray-400 text-sm">
+                💡 {t("pwaInfo")}
+              </p>
             </div>
           </CardContent>
         </Card>

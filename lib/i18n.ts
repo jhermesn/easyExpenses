@@ -1,4 +1,45 @@
+import { create } from "zustand"
+import { useCurrencyStore } from "./currency-store"
+
 export type Locale = "pt-BR" | "en-US" | "es-ES"
+
+interface LocaleState {
+  locale: Locale
+  setLocale: (locale: Locale) => void
+}
+
+export const useLocaleStore = create<LocaleState>((set) => ({
+  locale: "pt-BR",
+  setLocale: (locale) => set({ locale }),
+}))
+
+export function getLocale() {
+  return useLocaleStore.getState().locale
+}
+
+export function setLocale(locale: Locale) {
+  useLocaleStore.setState({ locale })
+}
+
+export function useI18n() {
+  const locale = useLocaleStore((state) => state.locale)
+
+  const t = (key: keyof Translations) => {
+    return translations[locale][key] || key
+  }
+
+  return { t, locale }
+}
+
+export function t(key: keyof Translations) {
+  const locale = useLocaleStore.getState().locale
+  return translations[locale][key] || key
+}
+
+export function tStatic(key: keyof Translations) {
+  const staticLocale: Locale = "pt-BR"
+  return translations[staticLocale][key] || key
+}
 
 export interface Translations {
   // Navigation
@@ -120,6 +161,9 @@ export interface Translations {
   transaction: string
   title: string
   transactionType: string
+  transactionTypeUnique: string
+  transactionTypeInstallment: string
+  transactionTypeFixed: string
   date: string
   dayOfMonth: string
   installments: string
@@ -152,6 +196,13 @@ export interface Translations {
   deleteAllInstallments: string
   installmentDeleteTitle: string
   installmentDeleteDescription: string
+  confirmDeleteInstallmentTitle: string
+  confirmDeleteInstallmentDescription: string
+  deleteAll: string
+  confirmDeleteFixedTitle: string
+  confirmDeleteFixedDescription: string
+  confirmDeleteSingleTitle: string
+  confirmDeleteSingleDescription: string
 
   // Validation
   required: string
@@ -343,6 +394,9 @@ const translations: Record<Locale, Translations> = {
     title: "Título",
     transaction: "Transação",
     transactionType: "Tipo de Transação",
+    transactionTypeUnique: "Única",
+    transactionTypeInstallment: "Parcelada",
+    transactionTypeFixed: "Fixa (mensal)",
     date: "Data",
     dayOfMonth: "Dia do Mês (1-31)",
     installments: "Número de Parcelas",
@@ -374,6 +428,14 @@ const translations: Record<Locale, Translations> = {
     deleteAllInstallments: "Excluir todas as parcelas",
     installmentDeleteTitle: "Excluir parcelamento",
     installmentDeleteDescription: "Escolha o que deseja excluir. Parcela atual:",
+    confirmDeleteInstallmentTitle: "Excluir Parcelamento",
+    confirmDeleteInstallmentDescription: "Você tem certeza que deseja excluir todas as parcelas deste grupo?",
+    deleteAll: "Excluir Todos",
+    confirmDeleteFixedTitle: "Excluir Transação Fixa",
+    confirmDeleteFixedDescription:
+      "Esta é uma transação fixa. Deseja excluir apenas a ocorrência deste mês ou cancelar a transação permanentemente?",
+    confirmDeleteSingleTitle: "Excluir Transação",
+    confirmDeleteSingleDescription: "Você tem certeza que deseja excluir esta transação?",
 
     // Validation
     required: "é obrigatório",
@@ -562,9 +624,12 @@ const translations: Record<Locale, Translations> = {
     expenseShort: "Expense",
     fixedShort: "Fixed",
     amount: "Amount",
-    transaction: "Transaction",
     title: "Title",
+    transaction: "Transaction",
     transactionType: "Transaction Type",
+    transactionTypeUnique: "One-time",
+    transactionTypeInstallment: "Installment",
+    transactionTypeFixed: "Fixed (monthly)",
     date: "Date",
     dayOfMonth: "Day of Month (1-31)",
     installments: "Number of Installments",
@@ -596,6 +661,14 @@ const translations: Record<Locale, Translations> = {
     deleteAllInstallments: "Delete all installments",
     installmentDeleteTitle: "Delete installments",
     installmentDeleteDescription: "Choose what to delete. Current installment:",
+    confirmDeleteInstallmentTitle: "Delete Installment",
+    confirmDeleteInstallmentDescription: "Are you sure you want to delete all installments in this group?",
+    deleteAll: "Delete All",
+    confirmDeleteFixedTitle: "Delete Fixed Transaction",
+    confirmDeleteFixedDescription:
+      "This is a fixed transaction. Do you want to delete only this month's occurrence or cancel the transaction permanently?",
+    confirmDeleteSingleTitle: "Delete Transaction",
+    confirmDeleteSingleDescription: "Are you sure you want to delete this transaction?",
 
     // Validation
     required: "is required",
@@ -707,14 +780,14 @@ const translations: Record<Locale, Translations> = {
     transactionsAndReports: "Extractos e Informes",
     quickTip: "Consejo Rápido",
     quickTipText:
-      "Comienza creando tus categorías principales (ej: Esencial, Ocio, Inversiones) y luego agrega tus primeras transacciones. La aplicación funciona 100% offline y tus datos permanecen seguros en tu dispositivo.",
+      "Comienza creando tus categorías principales (ej: Esencial, Ocio, Inversiones) y luego agrega tus primeras transacciones. La aplicación funciona 100% offline e tus datos permanecen seguros en tu dispositivo.",
     pwaInfo: "Esto es un PWA: puedes instalarlo en tu dispositivo para una experiencia nativa",
     organizeByCategoriesTitle: "Organiza por Categorías",
-    organizeByCategoriesDesc: "Crea categorías personalizadas con reglas de porcentaje",
-    completeControlTitle: "Control Completo",
-    completeControlDesc: "Gestiona ingresos, gastos fijos y cuotas",
+    organizeByCategoriesDesc: "Crea categorías personalizadas com regras de porcentagem",
+    completeControlTitle: "Controle Completo",
+    completeControlDesc: "Gerencie entradas, saídas fixas e parcelas",
     visualReportsTitle: "Informes Visuales",
-    visualReportsDesc: "Gráficos interactivos y exportación a PDF",
+    visualReportsDesc: "Gráficos interativos e exportação a PDF",
     categoriesPageSubtitle: "Organiza tus finanzas por categorías",
     transactionsPageSubtitle: "Visualiza y analiza tus transacciones",
 
@@ -724,7 +797,7 @@ const translations: Record<Locale, Translations> = {
     glossaryTitle: "Glosario de Términos",
     termCategoriesTitle: "Categorías",
     termCategoriesDesc:
-      "Grupos principales para organizar tus finanzas (ej.: Esencial, Ocio, Inversiones).",
+      "Grupos principais para organizar tus finanzas (ej.: Esencial, Ocio, Inversiones).",
     termSubcategoriesTitle: "Subcategorías",
     termSubcategoriesDesc:
       "Detalles dentro de una categoría. Pueden tener notas y, si hay reglas, porcentajes.",
@@ -744,7 +817,7 @@ const translations: Record<Locale, Translations> = {
     termWeeklyFlowTitle: "Flujo Semanal",
     termWeeklyFlowDesc: "Vista de ingresos y gastos por semana del mes.",
     termPDFExportTitle: "Exportación a PDF",
-    termPDFExportDesc: "Genera un PDF con resumen, gráficos y lista de transacciones.",
+    termPDFExportDesc: "Genera un PDF com resumo, gráficos e lista de transações.",
     termPWAOfflineTitle: "PWA y Offline",
     termPWAOfflineDesc: "Funciona sin conexión; tus datos se guardan localmente en el dispositivo.",
     goToCategories: "Ir a Categorías",
@@ -766,16 +839,16 @@ const translations: Record<Locale, Translations> = {
     notes: "Notas",
     optional: "opcional",
     withRules: "Con Reglas",
-    totalRules: "Total de reglas:",
+    totalRules: "Total de regras:",
     noCategoriesYet: "Aún no hay categorías creadas",
     createFirstCategoryPrompt: "Crea tu primera categoría para comenzar a organizar tus finanzas",
     createFirstCategory: "Crear primera categoría",
     editCategory: "Editar Categoría",
-    editCategorySubtitle: "Modifica los datos de la categoría",
-    newCategorySubtitle: "Crea una nueva categoría para organizar tus finanzas",
+    editCategorySubtitle: "Modifica los dados de la categoria",
+    newCategorySubtitle: "Crea una nueva categoria para organizar tus finanças",
     organizeYourCategoryIntoSubcategories: "Organiza tu categoría en subcategorías específicas",
     categoryNamePlaceholder: "Ej: Dinero General, Vale de Comida",
-    categoryNotesPlaceholder: "Notas sobre esta categoría...",
+    categoryNotesPlaceholder: "Notas sobre esta categoria...",
     subcategoryNamePlaceholder: "Ej: Gastos Esenciales",
     subcategoryNotesPlaceholder: "Notas sobre esta subcategoría...",
 
@@ -787,6 +860,9 @@ const translations: Record<Locale, Translations> = {
     transaction: "Transacción",
     title: "Título",
     transactionType: "Tipo de Transacción",
+    transactionTypeUnique: "Única",
+    transactionTypeInstallment: "A plazos",
+    transactionTypeFixed: "Fija (mensual)",
     date: "Fecha",
     dayOfMonth: "Día del Mes (1-31)",
     installments: "Número de Cuotas",
@@ -805,38 +881,46 @@ const translations: Record<Locale, Translations> = {
     selectASubcategory: "Selecciona una subcategoría",
     firstInstallmentDate: "Fecha de la Primera Cuota",
     incomeCannotBeInstallment: "Los ingresos no pueden ser en cuotas",
-    subcategoryRequiredForRuleBasedExpense: "La subcategoría es obligatoria para categorías de gasto con reglas",
+    subcategoryRequiredForRuleBasedExpense: "La subcategoría es obligatoria para categorías de gasto com regras",
     subcategoryRequiredForThisCategory: "La subcategoría es obligatoria para esta categoría",
     fixedIncomeDayHint: "Los ingresos fijos se repiten mensualmente en este día (ej: salario el día 5)",
     fixedExpenseDayHint: "Los gastos fijos se repiten mensualmente en este día (ej: alquiler el día 10)",
 
     // Transaction Types
     unique: "Única",
-    fixed: "Fija (mensual)",
+    fixed: "Fija (mensal)",
     installment: "A plazos",
     deleteOnlyThisInstallment: "Eliminar solo esta cuota",
     deleteAllInstallments: "Eliminar todas las cuotas",
     installmentDeleteTitle: "Eliminar cuotas",
-    installmentDeleteDescription: "Elige qué deseas eliminar. Cuota actual:",
+    installmentDeleteDescription: "Elige qué deseas eliminar. Cuota atual:",
+    confirmDeleteInstallmentTitle: "Eliminar Cuotas",
+    confirmDeleteInstallmentDescription: "¿Estás seguro de que quieres eliminar todas las cuotas de este grupo?",
+    deleteAll: "Eliminar Todos",
+    confirmDeleteFixedTitle: "Eliminar Transacción Fija",
+    confirmDeleteFixedDescription:
+      "Esta es una transacción fija. ¿Deseas eliminar solo la ocurrencia de este mes o cancelar la transacción permanentemente?",
+    confirmDeleteSingleTitle: "Eliminar Transacción",
+    confirmDeleteSingleDescription: "¿Estás seguro de que quieres eliminar esta transacción?",
 
     // Validation
-    required: "es requerido",
+    required: "es obligatorio",
     invalidAmount: "La cantidad debe ser mayor que cero",
     invalidInstallments: "Las cuotas deben tener al menos 2 pagos",
-    percentageExceeded: "La suma de porcentajes no puede exceder el 100%",
-    fixErrors: "Corrige los siguientes errores:",
-    allSubcategoriesMustHaveName: "Todas las subcategorías deben tener nombre",
-    rulesNeedAtLeastOneSubcategory: "Las categorías con reglas deben tener al menos una subcategoría",
+    percentageExceeded: "La suma de los porcentajes no puede exceder el 100%",
+    fixErrors: "Por favor, corrige los siguientes errores:",
+    allSubcategoriesMustHaveName: "Todas las subcategorías deben tener un nombre",
+    rulesNeedAtLeastOneSubcategory: "Las categorías con reglas deben tener al menos uma subcategoría",
     subcategoriesMustHavePercentageGreaterThanZero:
       "Todas las subcategorías con reglas deben tener un porcentaje mayor que 0",
-    confirmDeleteTransaction: "¿Está seguro de que desea eliminar esta transacción?",
-    confirmDeleteCategory: "¿Está seguro de que desea eliminar esta categoría?",
+    confirmDeleteTransaction: "¿Estás seguro de que quieres eliminar esta transacción?",
+    confirmDeleteCategory: "¿Estás seguro de que quieres eliminar esta categoría?",
     fixedTransactionDeleteQuestion:
-      "Esta es una transacción fija. ¿Qué desea eliminar? ¿Sólo este mes o cancelar la transacción fija permanentemente?",
+      "Esta es una transacción fija. ¿Qué deseas eliminar? ¿Solo este mes o cancelar la transacción fija permanentemente?",
     fixedTransactionCannotDeleteIndividually:
-      "Las transacciones fijas no pueden ser eliminadas individualmente. Para cancelar permanentemente, edite la transacción original.",
-    editOriginalTransactionToCancel: "Edite la transacción original para cancelar permanentemente.",
-    errorExportingReport: "Error al exportar el informe. Inténtelo de nuevo.",
+      "Las transacciones fijas no se pueden eliminar individualmente. Para cancelar permanentemente, edita la transacción original.",
+    editOriginalTransactionToCancel: "Edita la transacción original para cancelar permanentemente.",
+    errorExportingReport: "Error al exportar el informe. Por favor, inténtalo de nuevo.",
     used: "utilizado",
 
     // Reports
@@ -845,8 +929,8 @@ const translations: Record<Locale, Translations> = {
     exporting: "Exportando...",
     weeklyFlow: "Flujo Semanal",
     week: "Semana",
-    distributionRules: "Reglas de distribución (basadas en el total de ingresos)",
-    addIncomeToCalculateRules: "Agrega ingresos para calcular el presupuesto de las reglas",
+    distributionRules: "Reglas de distribución (basado en el total de ingresos)",
+    addIncomeToCalculateRules: "Agrega ingresos para calcular los presupuestos de las reglas",
 
     // Edit/Installments
     renameAllInstallments: "Renombrar todas las cuotas",
@@ -869,7 +953,7 @@ const translations: Record<Locale, Translations> = {
 
     // Footer / Legal
     by: "por",
-    licensedUnder: "está bajo la licencia",
+    licensedUnder: "está licenciado bajo",
     licenseShortName: "CC BY-NC-SA 4.0",
 
     // Report
@@ -886,49 +970,11 @@ const translations: Record<Locale, Translations> = {
   },
 }
 
-export const currencies = {
-  "pt-BR": { code: "BRL", symbol: "R$" },
-  "en-US": { code: "USD", symbol: "$" },
-  "es-ES": { code: "EUR", symbol: "€" },
-}
-
-let currentCurrencyCode: string | null = null
-
-let currentLocale: Locale = "pt-BR"
-
-export function setLocale(locale: Locale) {
-  currentLocale = locale
-  if (typeof window !== "undefined") {
-    localStorage.setItem("locale", locale)
-  }
-}
-
-export function getLocale(): Locale {
-  if (typeof window !== "undefined") {
-    const stored = localStorage.getItem("locale") as Locale
-    if (stored && translations[stored]) {
-      currentLocale = stored
-    }
-  }
-  return currentLocale
-}
-
-export function t(key: keyof Translations): string {
+export function formatCurrencyI18n(amount: number): string {
   const locale = getLocale()
-  return translations[locale][key] || translations["pt-BR"][key] || key
-}
-
-export function tStatic(key: keyof Translations): string {
-  return translations["pt-BR"][key] || key
-}
-
-export function formatCurrencyI18n(amount: number, locale?: Locale): string {
-  const currentLoc = locale || getLocale()
-  const storedCurrency =
-    typeof window !== "undefined" ? localStorage.getItem("currencyCode") : null
-  const currencyCode = storedCurrency || currencies[currentLoc].code
-  return new Intl.NumberFormat(currentLoc, {
+  const { currency } = useCurrencyStore.getState()
+  return new Intl.NumberFormat(locale, {
     style: "currency",
-    currency: currencyCode,
+    currency,
   }).format(amount)
 }

@@ -2,16 +2,17 @@
 
 import { useEffect, useMemo, useState } from "react"
 import { useRouter } from "next/navigation"
+import { DatabaseService } from "@/lib/database"
+import { AppLoader } from "@/components/app-loader"
 import { Button } from "@/components/ui/button"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Textarea } from "@/components/ui/textarea"
+import { t } from "@/lib/i18n"
+import { useClientMount } from "@/lib/use-client-mount"
 import { ArrowLeft, Pencil } from "lucide-react"
-import { DatabaseService } from "@/lib/database"
-import { t, tStatic } from "@/lib/i18n"
-import { AppLoader } from "@/components/app-loader"
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 
 interface Subcategory {
   id: string
@@ -47,11 +48,7 @@ interface Transaction {
 }
 
 export default function EditTransactionStaticPage() {
-  const isClient = typeof window !== "undefined"
-  const [mounted, setMounted] = useState(false)
-  useEffect(() => {
-    setMounted(true)
-  }, [])
+  const mounted = useClientMount()
 
   const router = useRouter()
   const [transactionId, setTransactionId] = useState<string>("")
@@ -83,40 +80,40 @@ export default function EditTransactionStaticPage() {
   })
 
   useEffect(() => {
-    const load = async () => {
+    if (!transactionId) return
+
+    const loadTransaction = async () => {
       try {
         setIsLoading(true)
         const db = DatabaseService.getInstance()
-        await db.init()
-        const [cats, tx] = await Promise.all([
+        const [transaction, loadedCategories] = await Promise.all([
+          db.getTransactionById(transactionId),
           db.getCategories(),
-          transactionId ? db.getTransaction(transactionId) : Promise.resolve(undefined),
         ])
-        setCategories(cats)
-        if (tx) {
-          setOriginal(tx)
-          const baseTitle = tx.installmentInfo
-            ? String(tx.title).replace(/\s*\(\d+\s*\/\s*\d+\)\s*$/, "").trim()
-            : tx.title
+
+        if (transaction) {
+          setOriginal(transaction)
           setFormData({
-            type: tx.type,
-            categoryId: tx.categoryId,
-            subcategoryId: tx.subcategoryId || "",
-            amount: String(tx.amount),
-            title: baseTitle,
-            transactionType: tx.installmentInfo ? "installment" : tx.transactionType,
-            date: new Date(tx.date).toISOString().split("T")[0],
-            dayOfMonth: String(tx.dayOfMonth || 1),
-            notes: tx.notes || "",
+            type: transaction.type,
+            categoryId: transaction.categoryId,
+            subcategoryId: transaction.subcategoryId || "",
+            amount: String(transaction.amount),
+            title: transaction.title,
+            transactionType: transaction.transactionType,
+            date: new Date(transaction.date).toISOString().split("T")[0],
+            dayOfMonth: String(transaction.dayOfMonth || "1"),
+            notes: transaction.notes || "",
           })
         }
+        setCategories(loadedCategories)
       } catch (error) {
         console.error("[ERRO] Erro ao carregar transação:", error)
       } finally {
         setIsLoading(false)
       }
     }
-    load()
+
+    loadTransaction()
   }, [transactionId])
 
   const selectedCategory = useMemo(
@@ -138,7 +135,6 @@ export default function EditTransactionStaticPage() {
 
     if (!formData.title.trim()) newErrors.push(`${t("title")} ${t("required")}`)
 
-    // Exigir subcategoria apenas quando categoria tem regras e a soma = 100%
     if (formData.type === "expense" && isRuleSum100 && !formData.subcategoryId) {
       newErrors.push(t("subcategoryRequiredForRuleBasedExpense"))
     }
@@ -190,8 +186,8 @@ export default function EditTransactionStaticPage() {
     if (!formData.title.trim()) return
     setIsRenamingAll(true)
     try {
-      const base = formData.title.replace(/\s*\(\d+\s*\/\s*\d+\)\s*$/, "").trim()
       const db = DatabaseService.getInstance()
+      const base = formData.title.replace(/\s*\(\d+\s*\/\s*\d+\)\s*$/, "").trim()
       await db.renameInstallmentGroup(original.installmentInfo.groupId, base)
       router.push("/")
     } catch (error) {
@@ -201,12 +197,10 @@ export default function EditTransactionStaticPage() {
     }
   }
 
-  if (!isClient || !mounted) return <AppLoader />
-
   if (isLoading || !original) {
     return (
       <div className="min-h-screen flex items-center justify-center">
-        <div className="text-green-400 text-lg">{tStatic("loading")}</div>
+        <div className="text-green-400 text-lg">{t("loading")}</div>
       </div>
     )
   }
