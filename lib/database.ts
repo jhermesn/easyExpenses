@@ -251,6 +251,10 @@ export class DatabaseService {
       const exists = existingTransactions.some((t) => t.id === fixedId)
 
       if (!exists && !generatedIds.has(fixedId)) {
+        const skipped = this.isFixedOccurrenceSkipped(template.id, year, month)
+        if (skipped) {
+          return
+        }
         toGenerate.push({
           ...template,
           id: fixedId,
@@ -391,6 +395,41 @@ export class DatabaseService {
         const result = (request.result || []).filter((t: Transaction) => t.transactionType === "fixed")
         resolve(result)
       }
+      request.onerror = () => reject(request.error)
+    })
+  }
+
+  private getSkipKeyForFixedOccurrence(fixedId: string, year: number, month: number): string {
+    return `skip-fixed:${fixedId}:${year}-${month}`
+  }
+
+  private isFixedOccurrenceSkipped(fixedId: string, year: number, month: number): boolean {
+    try {
+      const key = this.getSkipKeyForFixedOccurrence(fixedId, year, month)
+      const value = localStorage.getItem(key)
+      return value === "1"
+    } catch {
+      return false
+    }
+  }
+
+  async skipFixedOccurrence(fixedId: string, year: number, month: number): Promise<void> {
+    try {
+      const key = this.getSkipKeyForFixedOccurrence(fixedId, year, month)
+      localStorage.setItem(key, "1")
+    } catch (e) {
+      console.error("[ERRO] Falha ao marcar ocorrência fixa como ignorada", e)
+    }
+  }
+
+  async deleteFixedTemplate(fixedId: string): Promise<void> {
+    const db = await this.getDB()
+    return new Promise((resolve, reject) => {
+      const tx = db.transaction("transactions", "readwrite")
+      const store = tx.objectStore("transactions")
+      const request = store.delete(fixedId)
+
+      request.onsuccess = () => resolve()
       request.onerror = () => reject(request.error)
     })
   }

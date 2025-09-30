@@ -194,6 +194,8 @@ export interface Translations {
   installment: string
   deleteOnlyThisInstallment: string
   deleteAllInstallments: string
+  deleteOnlyThisOccurrence: string
+  cancelFixedPermanently: string
   installmentDeleteTitle: string
   installmentDeleteDescription: string
   confirmDeleteInstallmentTitle: string
@@ -426,6 +428,8 @@ const translations: Record<Locale, Translations> = {
     installment: "Parcelada",
     deleteOnlyThisInstallment: "Excluir só esta parcela",
     deleteAllInstallments: "Excluir todas as parcelas",
+    deleteOnlyThisOccurrence: "Excluir só este mês",
+    cancelFixedPermanently: "Cancelar transação fixa",
     installmentDeleteTitle: "Excluir parcelamento",
     installmentDeleteDescription: "Escolha o que deseja excluir. Parcela atual:",
     confirmDeleteInstallmentTitle: "Excluir Parcelamento",
@@ -659,6 +663,8 @@ const translations: Record<Locale, Translations> = {
     installment: "Installment",
     deleteOnlyThisInstallment: "Delete only this installment",
     deleteAllInstallments: "Delete all installments",
+    deleteOnlyThisOccurrence: "Delete only this month",
+    cancelFixedPermanently: "Cancel fixed transaction",
     installmentDeleteTitle: "Delete installments",
     installmentDeleteDescription: "Choose what to delete. Current installment:",
     confirmDeleteInstallmentTitle: "Delete Installment",
@@ -892,6 +898,8 @@ const translations: Record<Locale, Translations> = {
     installment: "A plazos",
     deleteOnlyThisInstallment: "Eliminar solo esta cuota",
     deleteAllInstallments: "Eliminar todas las cuotas",
+    deleteOnlyThisOccurrence: "Eliminar solo este mes",
+    cancelFixedPermanently: "Cancelar transacción fija",
     installmentDeleteTitle: "Eliminar cuotas",
     installmentDeleteDescription: "Elige qué deseas eliminar. Cuota atual:",
     confirmDeleteInstallmentTitle: "Eliminar Cuotas",

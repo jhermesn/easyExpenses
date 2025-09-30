@@ -187,15 +187,31 @@ export default function TransactionsPage() {
         description: t("confirmDeleteFixedDescription"),
         actions: [
           {
-            label: t("delete"),
+            label: t("deleteOnlyThisOccurrence"),
             color: "red",
             onClick: async () => {
               try {
                 const db = DatabaseService.getInstance()
-                await db.deleteTransaction(transaction.id)
+                const year = currentDate.getFullYear()
+                const month = currentDate.getMonth() + 1
+                await db.skipFixedOccurrence(transaction.originalFixedId!, year, month)
                 await loadData()
               } catch (error) {
-                console.error("[ERRO] Erro ao deletar transação:", error)
+                console.error("[ERRO] Erro ao excluir ocorrência fixa do mês:", error)
+              }
+              setDialogState({ ...dialogState, open: false })
+            },
+          },
+          {
+            label: t("cancelFixedPermanently"),
+            color: "red",
+            onClick: async () => {
+              try {
+                const db = DatabaseService.getInstance()
+                await db.deleteFixedTemplate(transaction.originalFixedId!)
+                await loadData()
+              } catch (error) {
+                console.error("[ERRO] Erro ao cancelar transação fixa:", error)
               }
               setDialogState({ ...dialogState, open: false })
             },
