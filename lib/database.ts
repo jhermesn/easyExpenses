@@ -267,15 +267,7 @@ export class DatabaseService {
     })
 
     toGenerate.sort((a, b) => (a.date > b.date ? 1 : -1))
-
-    const dailyLimit = 3
-    const dailyCounts: { [key: string]: number } = {}
-
-    return toGenerate.filter((tx) => {
-      const txDate = tx.date.toISOString().split("T")[0]
-      dailyCounts[txDate] = (dailyCounts[txDate] || 0) + 1
-      return dailyCounts[txDate] <= dailyLimit
-    })
+    return toGenerate
   }
 
   async getRawTransactionsByMonth(year: number, month: number): Promise<Transaction[]> {
