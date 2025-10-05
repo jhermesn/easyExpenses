@@ -31,11 +31,12 @@ export function TransactionChart({ transactions }: TransactionChartProps) {
   const totalIncome = transactions.filter((t) => t.type === "income").reduce((sum, t) => sum + t.amount, 0)
   const totalExpenses = transactions.filter((t) => t.type === "expense").reduce((sum, t) => sum + t.amount, 0)
 
-  const incomeVsExpense = [
+  const balance = totalIncome - totalExpenses
+  const balanceVsExpense = [
     {
-      name: t("income"),
-      value: totalIncome,
-      color: "#10b981",
+      name: t("balance"),
+      value: Math.max(balance, 0),
+      color: "#3b82f6",
     },
     {
       name: t("expenses"),
@@ -51,7 +52,7 @@ export function TransactionChart({ transactions }: TransactionChartProps) {
       return (
         <div className="bg-black/80 backdrop-blur-xl border border-white/10 rounded-lg p-3 shadow-xl">
           <p className="text-white font-medium">{payload[0].payload.name}</p>
-          <p className="text-green-400">{formatCurrency(payload[0].value)}</p>
+          <p style={{ color: payload[0].payload.color }}>{formatCurrency(payload[0].value)}</p>
         </div>
       )
     }
@@ -79,7 +80,7 @@ export function TransactionChart({ transactions }: TransactionChartProps) {
       <div className="space-y-8">
         <div>
           <h3 className="text-xl font-semibold text-green-400 mb-4">
-            {t("income")} vs {t("expenses")}
+            {t("balance")} vs {t("expenses")}
           </h3>
           <div className="flex items-center justify-center h-64 text-gray-400">
             <p>{t("noTransactionsFound")}</p>
@@ -92,13 +93,13 @@ export function TransactionChart({ transactions }: TransactionChartProps) {
   return (
     <div className="space-y-8">
       <div>
-        <h3 className="text-xl font-semibold text-green-400 mb-4">{t("income")} vs {t("expenses")}</h3>
+        <h3 className="text-xl font-semibold text-green-400 mb-4">{t("balance")} vs {t("expenses")}</h3>
         {/* Mobile */}
         <div className="block sm:hidden">
           <ResponsiveContainer width="100%" height={280}>
             <PieChart>
               <Pie
-                data={incomeVsExpense}
+                data={balanceVsExpense}
                 cx="50%"
                 cy="50%"
                 labelLine={false}
@@ -107,16 +108,16 @@ export function TransactionChart({ transactions }: TransactionChartProps) {
                 fill="#8884d8"
                 dataKey="value"
               >
-                {incomeVsExpense.map((entry, index) => (
+                {balanceVsExpense.map((entry, index) => (
                   <Cell key={`cell-${index}`} fill={entry.color} />
                 ))}
               </Pie>
               <Tooltip content={<CustomTooltip />} />
             </PieChart>
           </ResponsiveContainer>
-          {incomeVsExpense.length > 0 && (
+          {balanceVsExpense.length > 0 && (
             <div className="mt-3 flex items-center justify-center gap-4 text-sm">
-              {incomeVsExpense.map((item) => (
+              {balanceVsExpense.map((item) => (
                 <div key={item.name} className="flex items-center gap-2">
                   <span
                     className="inline-block w-2.5 h-2.5 rounded-full"
@@ -136,7 +137,7 @@ export function TransactionChart({ transactions }: TransactionChartProps) {
           <ResponsiveContainer width="100%" height={280}>
             <PieChart>
               <Pie
-                data={incomeVsExpense}
+                data={balanceVsExpense}
                 cx="50%"
                 cy="50%"
                 labelLine={false}
@@ -145,7 +146,7 @@ export function TransactionChart({ transactions }: TransactionChartProps) {
                 fill="#8884d8"
                 dataKey="value"
               >
-                {incomeVsExpense.map((entry, index) => (
+                {balanceVsExpense.map((entry, index) => (
                   <Cell key={`cell-${index}`} fill={entry.color} />
                 ))}
               </Pie>
